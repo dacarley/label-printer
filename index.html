@@ -20,7 +20,10 @@
     }
 
     *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; }
+    html,body{ height:100%; margin:0; 
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
     body{
       background:var(--bg);
       color:var(--fg);
@@ -91,6 +94,8 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       line-height:1.25;
       white-space: pre;
+    
+      font-size:16px;
     }
     @media (min-width: 900px){
       textarea{ min-height: 260px; }
@@ -717,7 +722,15 @@ Rollo</textarea>
       try { renderPrintRoot(snapshot); } catch(e) {}
 
       // Print synchronously inside the user gesture (important for iOS Safari)
+      
+      // iOS Safari: avoid zoom/resize weirdness caused by focused inputs during print
+      try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch(e) {}
+      try { els.txt && els.txt.blur && els.txt.blur(); } catch(e) {}
+
+      // Preserve scroll position (print UI can cause a jump)
+      const __sx = window.scrollX, __sy = window.scrollY;
       window.print();
+      setTimeout(() => window.scrollTo(__sx, __sy), 0);
 
       // iOS afterprint is unreliable; reset gate after a short delay.
       setTimeout(() => { __printing = false; }, 800);
