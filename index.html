@@ -686,6 +686,73 @@ Rollo</textarea>
       if (st) st.remove();
     }
 
+    // Temporarily strip the app UI from the DOM during printing.
+    // This prevents iOS/WebKit from paginating a second blank page.
+    let __printSaved = null;
+
+    function enterPrintMode(snapshot){
+      if (__printSaved) return;
+
+      // Save + detach the app wrapper
+      const wrap = document.querySelector('.wrap');
+      const parent = wrap ? wrap.parentNode : null;
+      const next = wrap ? wrap.nextSibling : null;
+
+      __printSaved = { wrap, parent, next, bodyStyle: document.body.getAttribute('style') || "" };
+
+      if (wrap && parent){
+        parent.removeChild(wrap);
+      }
+
+      // Make printRoot the only thing in the document flow
+      printRoot.setAttribute("aria-hidden", "false");
+      printRoot.style.position = "absolute";
+      printRoot.style.left = "0";
+      printRoot.style.top = "0";
+      printRoot.style.opacity = "1";
+      printRoot.style.pointerEvents = "auto";
+      printRoot.style.width = `calc(${snapshot.labelW} * 1in)`;
+      printRoot.style.height = `calc(${snapshot.labelH} * 1in)`;
+
+      // Clamp the body to exactly one page
+      document.body.style.margin = "0";
+      document.body.style.padding = "0";
+      document.body.style.background = "#fff";
+      document.body.style.overflow = "hidden";
+      document.body.style.width = `${snapshot.labelW}in`;
+      document.body.style.height = `${snapshot.labelH}in`;
+    }
+
+    function exitPrintMode(){
+      if (!__printSaved) return;
+
+      // Restore body style
+      if (__printSaved.bodyStyle){
+        document.body.setAttribute('style', __printSaved.bodyStyle);
+      } else {
+        document.body.removeAttribute('style');
+      }
+
+      // Hide printRoot again (kept warm offscreen)
+      printRoot.setAttribute("aria-hidden", "true");
+      printRoot.style.position = "";
+      printRoot.style.left = "";
+      printRoot.style.top = "";
+      printRoot.style.opacity = "";
+      printRoot.style.pointerEvents = "";
+      printRoot.style.width = "";
+      printRoot.style.height = "";
+
+      // Re-attach the app wrapper
+      const { wrap, parent, next } = __printSaved;
+      if (wrap && parent){
+        if (next) parent.insertBefore(wrap, next);
+        else parent.appendChild(wrap);
+      }
+
+      __printSaved = null;
+    }
+
     const printRoot = document.getElementById('printRoot');
 
     function renderPrintRoot({ labelW, labelH, pad, align, text, orientation }){
@@ -740,31 +807,28 @@ Rollo</textarea>
       if (__printing) return;
       __printing = true;
 
-      autosizeTextarea();
-      const snapshot = updateAll(); // updateAll will call renderPrintRoot(snapshot)
-
-      // Safety: ensure print DOM is ready (sync)
-      try { renderPrintRoot(snapshot); } catch(e) {}
-
-      // Print synchronously inside the user gesture (important for iOS Safari)
-      
       // iOS Safari: avoid zoom/resize weirdness caused by focused inputs during print
       try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch(e) {}
       try { els.txt && els.txt.blur && els.txt.blur(); } catch(e) {}
 
-      // Preserve scroll position (print UI can cause a jump)
-      const __sx = window.scrollX, __sy = window.scrollY;
-      
-      // Set explicit page size to prevent extra blank pages in iOS print preview
+      autosizeTextarea();
+      const snapshot = updateAll(); // keeps printRoot warm
+
+      // Ensure print DOM is ready (sync)
+      try { renderPrintRoot(snapshot); } catch(e) {}
+
+      // Set explicit page size + strip UI to prevent blank extra pages on iOS
       setPageSizeInches(snapshot.labelW, snapshot.labelH);
+      enterPrintMode(snapshot);
+
       window.print();
 
-      setTimeout(() => { try { clearPageSize(); } catch(e) {} }, 1500);
-
-      setTimeout(() => window.scrollTo(__sx, __sy), 0);
-
-      // iOS afterprint is unreliable; reset gate after a short delay.
-      setTimeout(() => { __printing = false; }, 800);
+      // Cleanup (afterprint is unreliable on iOS)
+      setTimeout(() => {
+        try { exitPrintMode(); } catch(e) {}
+        try { clearPageSize(); } catch(e) {}
+        __printing = false;
+      }, 1500);
     }
 
     // Events
