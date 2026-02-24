@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Label Print (Vanilla)</title>
+  <title>Label Print</title>
 
   <style>
     :root{
@@ -392,50 +392,53 @@
   <div class="app">
     <div class="panel">
       <h1>Label Printer</h1>
-
-      <div class="row controls">
-        <div>
-          <label for="w">Label width (in)</label>
-          <input id="w" type="number" min="0.5" step="0.01" value="4" inputmode="decimal" />
+      <div class="presetRow">
+        <div class="presetBtns">
+          <button type="button" class="secondary presetBtn" data-w="4" data-h="6" data-pad="0.20">4×6</button>
+          <button type="button" class="secondary presetBtn" data-w="2" data-h="1" data-pad="0.10">2×1</button>
         </div>
-        <div>
-          <label for="h">Label height (in)</label>
-          <input id="h" type="number" min="0.5" step="0.01" value="6" inputmode="decimal" />
-        </div>
-        <div>
-          <label for="pad">Padding (in)</label>
-          <input id="pad" type="number" min="0" step="0.01" value="0.20" inputmode="decimal" />
-        </div>
-        <div>
-          <label for="orient">Orientation</label>
-          <select id="orient">
-            <option value="portrait" selected>Portrait</option>
-            <option value="landscape">Landscape (rotate content)</option>
-          </select>
-        </div>
-        <div>
-          <label for="align">Text align</label>
-          <select id="align">
-            <option value="center" selected>Center</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-          </select>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button id="printBtn">Print</button>
-        </div>
+        <div class="status" id="status">Ready</div>
       </div>
+
+      <details id="settingsDetails" class="settings">
+        <summary>Label settings</summary>
+
+        <div class="row controls">
+          <div>
+            <label for="w">Width (in)</label>
+            <input id="w" type="number" min="0.5" step="0.01" value="4" inputmode="decimal" />
+          </div>
+          <div>
+            <label for="h">Height (in)</label>
+            <input id="h" type="number" min="0.5" step="0.01" value="6" inputmode="decimal" />
+          </div>
+          <div>
+            <label for="pad">Padding (in)</label>
+            <input id="pad" type="number" min="0" step="0.01" value="0.20" inputmode="decimal" />
+          </div>
+          <div>
+            <label for="orient">Orientation</label>
+            <select id="orient">
+              <option value="portrait" selected>Portrait</option>
+              <option value="landscape">Landscape (rotate content)</option>
+            </select>
+          </div>
+          <div>
+            <label for="align">Text align</label>
+            <select id="align">
+              <option value="center" selected>Center</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </div>
+      </details>
 
       <div class="row">
         <div>
-          <label for="txt">Label text (newlines are respected; wrapping is disabled)</label>
+          <label for="txt">Label text</label>
           <textarea id="txt" spellcheck="false" placeholder="Type your label text here...">Hello
 Rollo</textarea>
-
-          <div class="hint">
-            Preview always shows a portrait label; landscape rotates the text inside it (matches printing behavior).
-          </div>
 
           <div id="overflowWarn" class="warn" style="display:none;">
             This text can’t fit even at the minimum font size. Shorten a line or increase label size.
@@ -443,11 +446,10 @@ Rollo</textarea>
         </div>
       </div>
 
-      <div class="btnrow">
-        <button id="resetBtn" class="secondary" type="button">Reset to 4×6</button>
-        <div class="status" id="status">Ready</div>
+      <div class="row">
+        <button id="printBtn" class="primary" type="button">Print</button>
       </div>
-    </div>
+</div>
 
     <div class="panel">
       <h1>Preview</h1>
@@ -479,12 +481,55 @@ Rollo</textarea>
       previewSpan: document.getElementById('previewSpan'),
 
       printBtn: document.getElementById('printBtn'),
-      resetBtn: document.getElementById('resetBtn'),
-      status: document.getElementById('status'),
+      presetBtns: Array.from(document.querySelectorAll('.presetBtn')),
+      settingsDetails: document.getElementById('settingsDetails'),      status: document.getElementById('status'),
       overflowWarn: document.getElementById('overflowWarn'),
 
       overlay: document.getElementById('printOverlay')
     };
+
+    const STORAGE_KEY = "label_printer_v4_settings";
+
+    function loadSettings(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      }catch(e){
+        return null;
+      }
+    }
+
+    let __saveT = null;
+    function saveSettings(){
+      clearTimeout(__saveT);
+      __saveT = setTimeout(() => {
+        try{
+          const payload = {
+            w: els.w.value,
+            h: els.h.value,
+            pad: els.pad.value,
+            orient: els.orient.value,
+            align: els.align.value,
+            txt: els.txt.value,
+            settingsOpen: !!(els.settingsDetails && els.settingsDetails.open),
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        }catch(e){}
+      }, 120);
+    }
+
+    function applySettings(s){
+      if (!s) return;
+      if (typeof s.w === "string") els.w.value = s.w;
+      if (typeof s.h === "string") els.h.value = s.h;
+      if (typeof s.pad === "string") els.pad.value = s.pad;
+      if (typeof s.orient === "string") els.orient.value = s.orient;
+      if (typeof s.align === "string") els.align.value = s.align;
+      if (typeof s.txt === "string") els.txt.value = s.txt;
+      if (els.settingsDetails && typeof s.settingsOpen === "boolean") els.settingsDetails.open = s.settingsOpen;
+    }
+
 
     function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
     function normalizeText(raw){ return (raw ?? '').replace(/\r\n/g, '\n'); }
@@ -686,73 +731,6 @@ Rollo</textarea>
       if (st) st.remove();
     }
 
-    // Temporarily strip the app UI from the DOM during printing.
-    // This prevents iOS/WebKit from paginating a second blank page.
-    let __printSaved = null;
-
-    function enterPrintMode(snapshot){
-      if (__printSaved) return;
-
-      // Save + detach the app wrapper
-      const wrap = document.querySelector('.wrap');
-      const parent = wrap ? wrap.parentNode : null;
-      const next = wrap ? wrap.nextSibling : null;
-
-      __printSaved = { wrap, parent, next, bodyStyle: document.body.getAttribute('style') || "" };
-
-      if (wrap && parent){
-        parent.removeChild(wrap);
-      }
-
-      // Make printRoot the only thing in the document flow
-      printRoot.setAttribute("aria-hidden", "false");
-      printRoot.style.position = "absolute";
-      printRoot.style.left = "0";
-      printRoot.style.top = "0";
-      printRoot.style.opacity = "1";
-      printRoot.style.pointerEvents = "auto";
-      printRoot.style.width = `calc(${snapshot.labelW} * 1in)`;
-      printRoot.style.height = `calc(${snapshot.labelH} * 1in)`;
-
-      // Clamp the body to exactly one page
-      document.body.style.margin = "0";
-      document.body.style.padding = "0";
-      document.body.style.background = "#fff";
-      document.body.style.overflow = "hidden";
-      document.body.style.width = `${snapshot.labelW}in`;
-      document.body.style.height = `${snapshot.labelH}in`;
-    }
-
-    function exitPrintMode(){
-      if (!__printSaved) return;
-
-      // Restore body style
-      if (__printSaved.bodyStyle){
-        document.body.setAttribute('style', __printSaved.bodyStyle);
-      } else {
-        document.body.removeAttribute('style');
-      }
-
-      // Hide printRoot again (kept warm offscreen)
-      printRoot.setAttribute("aria-hidden", "true");
-      printRoot.style.position = "";
-      printRoot.style.left = "";
-      printRoot.style.top = "";
-      printRoot.style.opacity = "";
-      printRoot.style.pointerEvents = "";
-      printRoot.style.width = "";
-      printRoot.style.height = "";
-
-      // Re-attach the app wrapper
-      const { wrap, parent, next } = __printSaved;
-      if (wrap && parent){
-        if (next) parent.insertBefore(wrap, next);
-        else parent.appendChild(wrap);
-      }
-
-      __printSaved = null;
-    }
-
     const printRoot = document.getElementById('printRoot');
 
     function renderPrintRoot({ labelW, labelH, pad, align, text, orientation }){
@@ -807,39 +785,56 @@ Rollo</textarea>
       if (__printing) return;
       __printing = true;
 
+      autosizeTextarea();
+      const snapshot = updateAll(); // updateAll will call renderPrintRoot(snapshot)
+
+      // Safety: ensure print DOM is ready (sync)
+      try { renderPrintRoot(snapshot); } catch(e) {}
+
+      // Print synchronously inside the user gesture (important for iOS Safari)
+      
       // iOS Safari: avoid zoom/resize weirdness caused by focused inputs during print
       try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch(e) {}
       try { els.txt && els.txt.blur && els.txt.blur(); } catch(e) {}
 
-      autosizeTextarea();
-      const snapshot = updateAll(); // keeps printRoot warm
-
-      // Ensure print DOM is ready (sync)
-      try { renderPrintRoot(snapshot); } catch(e) {}
-
-      // Set explicit page size + strip UI to prevent blank extra pages on iOS
+      // Preserve scroll position (print UI can cause a jump)
+      const __sx = window.scrollX, __sy = window.scrollY;
+      
+      // Set explicit page size to prevent extra blank pages in iOS print preview
       setPageSizeInches(snapshot.labelW, snapshot.labelH);
-      enterPrintMode(snapshot);
-
       window.print();
 
-      // Cleanup (afterprint is unreliable on iOS)
-      setTimeout(() => {
-        try { exitPrintMode(); } catch(e) {}
-        try { clearPageSize(); } catch(e) {}
-        __printing = false;
-      }, 1500);
+      setTimeout(() => { try { clearPageSize(); } catch(e) {} }, 1500);
+
+      setTimeout(() => window.scrollTo(__sx, __sy), 0);
+
+      // iOS afterprint is unreliable; reset gate after a short delay.
+      setTimeout(() => { __printing = false; }, 800);
     }
 
-    // Events
+    
+    // Presets
+    els.presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        els.w.value = btn.dataset.w || els.w.value;
+        els.h.value = btn.dataset.h || els.h.value;
+        if (btn.dataset.pad) els.pad.value = btn.dataset.pad;
+        autosizeTextarea();
+        updateAll();
+        saveSettings();
+      });
+    });
+
+// Events
     [els.w, els.h, els.pad, els.orient, els.align].forEach(el => {
-      el.addEventListener('input', () => { autosizeTextarea(); updateAll(); });
-      el.addEventListener('change', () => { autosizeTextarea(); updateAll(); });
+      el.addEventListener('input', () => { autosizeTextarea(); updateAll(); saveSettings(); });
+      el.addEventListener('change', () => { autosizeTextarea(); updateAll(); saveSettings(); });
     });
 
     els.txt.addEventListener('input', () => {
       autosizeTextarea();
       updateAll();
+      saveSettings();
     });
 
     window.addEventListener('resize', () => {
@@ -852,19 +847,17 @@ Rollo</textarea>
 
     els.printBtn.addEventListener('click', printNow);
 
-    els.resetBtn.addEventListener('click', () => {
-      els.w.value = '4';
-      els.h.value = '6';
-      els.pad.value = '0.20';
-      els.orient.value = 'portrait';
-      els.align.value = 'center';
-      autosizeTextarea();
+    if (els.settingsDetails){
+      els.settingsDetails.addEventListener('toggle', saveSettings);
+    }
       updateAll();
     });
 
     // Init
+    applySettings(loadSettings());
     autosizeTextarea();
     updateAll();
+    saveSettings();
   </script>
 </body>
 </html>
