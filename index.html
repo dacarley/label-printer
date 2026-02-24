@@ -189,8 +189,8 @@
       display:inline-block;
       font-weight:800;
       line-height:1.05;
-      white-space: pre;      /* preserve newlines */
-      overflow-wrap: normal; /* no wrapping */
+      white-space: pre;
+      overflow-wrap: normal;
       word-break: keep-all;
       hyphens: none;
       text-align:center;
@@ -201,6 +201,57 @@
       color:#ff6b6b;
       font-size:12px;
       margin-top:8px;
+    }
+
+    /* ---- Print overlay ---- */
+    #printOverlay{
+      position:fixed;
+      inset:0;
+      background:#fff;
+      display:none;        /* shown only during print flow */
+      z-index: 999999;
+    }
+
+    #printOverlay .printLabel{
+      width: calc(var(--label-w-in) * 1in);
+      height: calc(var(--label-h-in) * 1in);
+      margin:0;
+      position:absolute;
+      left:0;
+      top:0;
+      background:#fff;
+      color:#000;
+    }
+
+    #printOverlay .printInner{
+      position:absolute;
+      inset: calc(var(--padding-in) * 1in);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      padding:0;
+    }
+
+    #printOverlay .printSpan{
+      display:inline-block;
+      font-weight:800;
+      line-height:1.05;
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: keep-all;
+      hyphens:none;
+      text-align:center;
+      font-size: 24pt; /* JS overrides */
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    /* Print: hide app, show overlay */
+    @page { size: auto; margin: 0; }
+    @media print{
+      html,body{ margin:0 !important; padding:0 !important; background:#fff !important; }
+      .app{ display:none !important; }
+      #printOverlay{ display:block !important; }
     }
   </style>
 </head>
@@ -251,7 +302,7 @@
 Rollo</textarea>
 
           <div class="hint">
-            macOS Safari uses the print dialog’s Paper Size. If you see 8.5×11 in preview, set Paper Size to your label (or a Rollo label preset).
+            macOS Safari print preview may still show Letter if Paper Size is set to 8.5×11. That’s a Safari print setting. Chrome/iOS should be correct.
           </div>
 
           <div id="overflowWarn" class="warn" style="display:none;">
@@ -278,6 +329,9 @@ Rollo</textarea>
     </div>
   </div>
 
+  <!-- Print overlay (constructed/filled by JS, then torn down) -->
+  <div id="printOverlay" aria-hidden="true"></div>
+
   <script>
     const els = {
       w: document.getElementById('w'),
@@ -293,7 +347,9 @@ Rollo</textarea>
       printBtn: document.getElementById('printBtn'),
       resetBtn: document.getElementById('resetBtn'),
       status: document.getElementById('status'),
-      overflowWarn: document.getElementById('overflowWarn')
+      overflowWarn: document.getElementById('overflowWarn'),
+
+      overlay: document.getElementById('printOverlay')
     };
 
     function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
@@ -359,6 +415,33 @@ Rollo</textarea>
       return { fontPx: best, minFits };
     }
 
+    // Print overlay uses PT to behave better in print engines (esp. Safari)
+    function measureSpanFitsPt(spanEl, containerEl, fontPt){
+      spanEl.style.fontSize = fontPt + 'pt';
+      const s = spanEl.getBoundingClientRect();
+      const c = containerEl.getBoundingClientRect();
+      return (s.width <= c.width) && (s.height <= c.height);
+    }
+
+    function bestFitFontPt(spanEl, containerEl){
+      const MIN_PT = 4;
+      const MAX_PT = 800;
+
+      let lo = MIN_PT, hi = MAX_PT, best = MIN_PT;
+      while (lo <= hi){
+        const mid = Math.floor((lo + hi) / 2);
+        if (measureSpanFitsPt(spanEl, containerEl, mid)){
+          best = mid; lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+      spanEl.style.fontSize = best + 'pt';
+      const minFits = measureSpanFitsPt(spanEl, containerEl, MIN_PT);
+      spanEl.style.fontSize = best + 'pt';
+      return { fontPt: best, minFits };
+    }
+
     function syncPreviewText(){
       const t = normalizeText(els.txt.value);
       els.previewSpan.textContent = t;
@@ -381,132 +464,86 @@ Rollo</textarea>
 
       setCSSVars(labelW, labelH, pad);
       applyAlignment(align);
-      const t = syncPreviewText();
+      const text = syncPreviewText();
 
       const p = bestFitFontPx(els.previewSpan, els.previewInner);
       els.overflowWarn.style.display = p.minFits ? 'none' : 'block';
       els.status.textContent = p.minFits ? `Fit: ${Math.round(p.fontPx)}px` : `Text too large`;
 
-      return { labelW, labelH, pad, align, text: t };
+      return { labelW, labelH, pad, align, text };
     }
 
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, c => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[c]));
+    function buildPrintOverlay({ labelW, labelH, pad, align, text }){
+      // Set vars so overlay uses correct inch sizing
+      setCSSVars(labelW, labelH, pad);
+
+      // Clear + build
+      els.overlay.innerHTML = "";
+      els.overlay.style.display = "block";
+      els.overlay.setAttribute("aria-hidden", "false");
+
+      const label = document.createElement("div");
+      label.className = "printLabel";
+
+      const inner = document.createElement("div");
+      inner.className = "printInner";
+
+      const span = document.createElement("span");
+      span.className = "printSpan";
+      span.textContent = text;
+
+      // alignment
+      span.style.textAlign = align;
+      inner.style.justifyContent =
+        (align === "left") ? "flex-start" :
+        (align === "right") ? "flex-end" : "center";
+
+      // small inset for left/right like preview
+      inner.style.paddingLeft  = (align === "left")  ? "0.10in" : "0";
+      inner.style.paddingRight = (align === "right") ? "0.10in" : "0";
+
+      inner.appendChild(span);
+      label.appendChild(inner);
+      els.overlay.appendChild(label);
+
+      return { inner, span };
     }
 
-    // Print using a dedicated, minimal document (most reliable on iOS + Safari)
-    function openPrintWindow({ labelW, labelH, pad, align, text }){
-      const safeText = escapeHtml(text).replace(/\n/g, "&#10;"); // preserve newlines
-
-      const html = `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Print Label</title>
-<style>
-  :root{
-    --w: ${labelW};
-    --h: ${labelH};
-    --pad: ${pad};
-  }
-  @page { size: calc(var(--w) * 1in) calc(var(--h) * 1in); margin: 0; }
-  html, body{
-    margin:0; padding:0;
-    width: calc(var(--w) * 1in);
-    height: calc(var(--h) * 1in);
-    overflow:hidden;
-    background:#fff;
-  }
-  .label{
-    width: 100%;
-    height: 100%;
-    display:flex;
-    align-items:center;
-    justify-content:${align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center"};
-    padding-left: ${align === "left" ? "0.10in" : "0"};
-    padding-right:${align === "right" ? "0.10in" : "0"};
-  }
-  .inner{
-    width: calc(100% - (var(--pad) * 2 * 1in));
-    height: calc(100% - (var(--pad) * 2 * 1in));
-    margin: calc(var(--pad) * 1in);
-    display:flex;
-    align-items:center;
-    justify-content:inherit;
-    overflow:hidden;
-  }
-  #span{
-    display:inline-block;
-    font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    font-weight: 800;
-    line-height: 1.05;
-    white-space: pre;
-    overflow-wrap: normal;
-    word-break: keep-all;
-    hyphens:none;
-    text-align:${align};
-    font-size: 24pt; /* will be replaced */
-  }
-</style>
-</head>
-<body>
-  <div class="label">
-    <div class="inner" id="inner">
-      <span id="span">${safeText}</span>
-    </div>
-  </div>
-
-<script>
-  function measureFits(pt){
-    const span = document.getElementById('span');
-    const inner = document.getElementById('inner');
-    span.style.fontSize = pt + 'pt';
-    const s = span.getBoundingClientRect();
-    const c = inner.getBoundingClientRect();
-    return (s.width <= c.width) && (s.height <= c.height);
-  }
-
-  function bestFitPt(){
-    const MIN_PT = 4;    // safety floor
-    const MAX_PT = 800;  // plenty
-    let lo = MIN_PT, hi = MAX_PT, best = MIN_PT;
-
-    while (lo <= hi){
-      const mid = Math.floor((lo + hi) / 2);
-      if (measureFits(mid)){ best = mid; lo = mid + 1; }
-      else { hi = mid - 1; }
+    function teardownPrintOverlay(){
+      els.overlay.style.display = "none";
+      els.overlay.setAttribute("aria-hidden", "true");
+      els.overlay.innerHTML = "";
     }
-    document.getElementById('span').style.fontSize = best + 'pt';
-    return best;
-  }
 
-  // Give layout a tick (iOS especially)
-  requestAnimationFrame(() => {
-    bestFitPt();
-    setTimeout(() => { window.print(); }, 50);
-  });
-<\/script>
-</body>
-</html>`;
-
-      const w = window.open("", "_blank");
-      if (!w) {
-        alert("Popup blocked. Allow popups for this site to print.");
-        return;
-      }
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
+    function nextPaint(){
+      return new Promise(resolve => requestAnimationFrame(() => resolve()));
     }
 
     async function printNow(){
       autosizeTextarea();
       const snapshot = updateAll();
-      openPrintWindow(snapshot);
+
+      // Build overlay and fit font AFTER it exists in DOM
+      const { inner, span } = buildPrintOverlay(snapshot);
+
+      // Wait for layout
+      await nextPaint();
+      await nextPaint();
+
+      // Fit in PT (more stable for printing)
+      bestFitFontPt(span, inner);
+
+      // iOS likes a small delay before print
+      const cleanup = () => teardownPrintOverlay();
+
+      // afterprint is not 100% reliable on iOS, but works on desktop.
+      window.addEventListener("afterprint", cleanup, { once: true });
+
+      setTimeout(() => {
+        window.print();
+        // fallback cleanup in case afterprint doesn't fire
+        setTimeout(cleanup, 1500);
+      }, 60);
     }
 
     // Events
