@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Label Print (Vanilla)</title>
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --fg:#e8e8e8;
+      --muted:#a7a7a7;
+      --card:#14161d;
+      --border:rgba(255,255,255,0.12);
+
+      /* label settings (inches) */
+      --label-w-in: 4;
+      --label-h-in: 6;
+      --padding-in: 0.2;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      background:var(--bg);
+      color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.35;
+    }
+
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px){
+      .app{ grid-template-columns: 1.15fr 0.85fr; }
+    }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.35);
+      min-width:0;
+    }
+
+    h1{
+      font-size:16px;
+      margin:0 0 10px 0;
+      font-weight:650;
+      letter-spacing:0.2px;
+    }
+
+    .row{ display:grid; gap:10px; margin-bottom:10px; }
+
+    .row.controls{ grid-template-columns: 1fr; }
+    @media (min-width: 520px){
+      .row.controls{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (min-width: 900px){
+      .row.controls{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    input[type="number"], select, textarea, button{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.04);
+      color:var(--fg);
+      padding:10px 10px;
+      font-size:14px;
+      outline:none;
+    }
+
+    /* Default textarea sizing (wide layouts) */
+    textarea{
+      min-height: 38vh;
+      max-height: 60vh;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      line-height:1.25;
+      white-space: pre;
+    }
+    @media (min-width: 900px){
+      textarea{ min-height: 260px; }
+    }
+
+    /* Stacked mode: smaller default + auto-grow/shrink (JS sets height), no manual resize */
+    @media (max-width: 899px){
+      textarea{
+        min-height: 120px;
+        max-height: 55vh;
+        resize: none;
+      }
+    }
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    button{
+      cursor:pointer;
+      background: rgba(122,162,255,0.18);
+      border-color: rgba(122,162,255,0.45);
+      font-weight:650;
+      padding: 12px 12px;
+    }
+    button:hover{ background: rgba(122,162,255,0.26); }
+    button:active{ transform: translateY(1px); }
+
+    .secondary{
+      background: rgba(255,255,255,0.06);
+      border-color: var(--border);
+      font-weight:600;
+    }
+
+    .status{
+      margin-left:auto;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .previewOuter{
+      display:grid;
+      place-items:center;
+      padding:12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.18);
+      border-radius:14px;
+      overflow:auto;
+    }
+
+    /* Preview label: on phones clamp to panel width, preserve aspect */
+    .label{
+      background:#fff;
+      color:#000;
+      box-shadow:0 10px 26px rgba(0,0,0,0.35);
+      position:relative;
+      border-radius:12px;
+
+      width: min(100%, calc(var(--label-w-in) * 96px));
+      aspect-ratio: calc(var(--label-w-in) / var(--label-h-in));
+      height: auto;
+    }
+    @media (min-width: 520px){
+      .label{
+        width: calc(var(--label-w-in) * 96px);
+        height: calc(var(--label-h-in) * 96px);
+        aspect-ratio: auto;
+      }
+    }
+
+    .labelInner{
+      position:absolute;
+      inset: calc(var(--padding-in) * 96px);
+      border:1px solid rgba(0,0,0,0.10);
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      padding:0;
+    }
+
+    .labelTextSpan{
+      display:inline-block;
+      font-weight:800;
+      line-height:1.05;
+
+      /* Preserve typed newlines, never wrap */
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: keep-all;
+      hyphens: none;
+
+      text-align:center;
+      font-size: 32px; /* JS overrides */
+    }
+
+    .warn{
+      color:#ff6b6b;
+      font-size:12px;
+      margin-top:8px;
+    }
+
+    /* PRINTING */
+    @page { size: auto; margin: 0; }
+
+    @media print{
+      html,body{ background:#fff !important; }
+      body *{ visibility:hidden !important; }
+      #printArea, #printArea *{ visibility:visible !important; }
+
+      #printArea{
+        position: fixed;
+        inset:0;
+        display:grid;
+        place-items:start;
+      }
+      #printLabel{
+        width: calc(var(--label-w-in) * 1in);
+        height: calc(var(--label-h-in) * 1in);
+        margin:0 !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        border:none !important;
+      }
+      #printLabel .labelInner{
+        inset: calc(var(--padding-in) * 1in);
+        border:none;
+        border-radius:0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="panel">
+      <h1>Label Printer</h1>
+
+      <div class="row controls">
+        <div>
+          <label for="w">Label width (in)</label>
+          <input id="w" type="number" min="0.5" step="0.01" value="4" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="h">Label height (in)</label>
+          <input id="h" type="number" min="0.5" step="0.01" value="6" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="pad">Padding (in)</label>
+          <input id="pad" type="number" min="0" step="0.01" value="0.20" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="orient">Orientation</label>
+          <select id="orient">
+            <option value="portrait" selected>Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+        <div>
+          <label for="align">Text align</label>
+          <select id="align">
+            <option value="center" selected>Center</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="printBtn">Print</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="txt">Label text (newlines are respected; wrapping is disabled)</label>
+          <textarea id="txt" spellcheck="false" placeholder="Type your label text here...">Hello
+Rollo</textarea>
+          <div class="hint">
+            Tip: If you see headers/footers in print output, disable “Headers and footers” in your browser print dialog.
+          </div>
+          <div id="overflowWarn" class="warn" style="display:none;">
+            This text can’t fit even at the minimum font size. Shorten a line or increase label size.
+          </div>
+        </div>
+      </div>
+
+      <div class="btnrow">
+        <button id="resetBtn" class="secondary" type="button">Reset to 4×6</button>
+        <div class="status" id="status">Ready</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h1>Preview</h1>
+      <div class="previewOuter">
+        <div class="label" id="previewLabel">
+          <div class="labelInner" id="previewInner">
+            <span class="labelTextSpan" id="previewSpan"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print area (kept off-screen; print CSS makes it the only visible thing) -->
+  <div id="printArea" style="position:absolute; left:-99999px; top:-99999px;">
+    <div class="label" id="printLabel">
+      <div class="labelInner" id="printInner">
+        <span class="labelTextSpan" id="printSpan"></span>
+      </div>
+    </div>
+  </div>
+
+  <style id="pageStyle"></style>
+
+  <script>
+    const els = {
+      w: document.getElementById('w'),
+      h: document.getElementById('h'),
+      pad: document.getElementById('pad'),
+      orient: document.getElementById('orient'),
+      align: document.getElementById('align'),
+      txt: document.getElementById('txt'),
+
+      previewInner: document.getElementById('previewInner'),
+      previewSpan: document.getElementById('previewSpan'),
+
+      printInner: document.getElementById('printInner'),
+      printSpan: document.getElementById('printSpan'),
+
+      printBtn: document.getElementById('printBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      status: document.getElementById('status'),
+      pageStyle: document.getElementById('pageStyle'),
+      overflowWarn: document.getElementById('overflowWarn')
+    };
+
+    function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+    function normalizeText(raw){ return (raw ?? '').replace(/\r\n/g, '\n'); }
+
+    function isStackedMode(){
+      return window.matchMedia('(max-width: 899px)').matches;
+    }
+
+    function autosizeTextarea(){
+      if (!isStackedMode()){
+        // restore defaults in wide mode
+        els.txt.style.height = '';
+        els.txt.style.overflowY = '';
+        return;
+      }
+
+      // Let it shrink then grow to exact content height
+      els.txt.style.height = 'auto';
+
+      // Cap to avoid taking over the screen
+      const maxPx = Math.floor(window.innerHeight * 0.55);
+      const target = Math.min(els.txt.scrollHeight + 2, maxPx);
+
+      els.txt.style.height = target + 'px';
+      els.txt.style.overflowY = (els.txt.scrollHeight + 2 > maxPx) ? 'auto' : 'hidden';
+    }
+
+    function setCSSVars(labelW, labelH, padIn){
+      document.documentElement.style.setProperty('--label-w-in', String(labelW));
+      document.documentElement.style.setProperty('--label-h-in', String(labelH));
+      document.documentElement.style.setProperty('--padding-in', String(padIn));
+    }
+
+    function updatePageSizeCSS(w, h, orientation){
+      const pw = orientation === 'landscape' ? h : w;
+      const ph = orientation === 'landscape' ? w : h;
+      els.pageStyle.textContent = `@page { size: ${pw}in ${ph}in; margin: 0; }`;
+    }
+
+    function applyAlignment(alignment){
+      const a = alignment;
+      els.previewSpan.style.textAlign = a;
+      els.printSpan.style.textAlign = a;
+
+      const justify = (a === 'left') ? 'flex-start' : (a === 'right') ? 'flex-end' : 'center';
+      els.previewInner.style.justifyContent = justify;
+      els.printInner.style.justifyContent = justify;
+
+      const inset = (a === 'center') ? '0' : '0.10in';
+      els.previewInner.style.paddingLeft  = (a === 'left')  ? inset : '0';
+      els.previewInner.style.paddingRight = (a === 'right') ? inset : '0';
+      els.printInner.style.paddingLeft    = (a === 'left')  ? inset : '0';
+      els.printInner.style.paddingRight   = (a === 'right') ? inset : '0';
+    }
+
+    function measureSpanFits(spanEl, containerEl, fontPx){
+      spanEl.style.fontSize = fontPx + 'px';
+      const s = spanEl.getBoundingClientRect();
+      const c = containerEl.getBoundingClientRect();
+      const fits = (s.width <= c.width) && (s.height <= c.height);
+      return { fits };
+    }
+
+    function bestFitFontPx(spanEl, containerEl){
+      const MIN_PX = 6;     // safety floor; set to 1 if you truly want “always fit no matter what”
+      const MAX_PX = 1200;
+
+      let lo = MIN_PX, hi = MAX_PX, best = MIN_PX;
+      while (lo <= hi){
+        const mid = (lo + hi) >> 1;
+        if (measureSpanFits(spanEl, containerEl, mid).fits){
+          best = mid; lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+
+      // Set to the best size…
+      spanEl.style.fontSize = best + 'px';
+
+      // …but do a min-check WITHOUT leaving it at MIN_PX.
+      const minFits = measureSpanFits(spanEl, containerEl, MIN_PX).fits;
+      spanEl.style.fontSize = best + 'px'; // restore
+
+      return { fontPx: best, minFits };
+    }
+
+    function syncText(){
+      const t = normalizeText(els.txt.value);
+      els.previewSpan.textContent = t;
+      els.printSpan.textContent = t;
+    }
+
+    function updateAll(){
+      let w = parseFloat(els.w.value || '4');
+      let h = parseFloat(els.h.value || '6');
+      let pad = parseFloat(els.pad.value || '0.2');
+      const orientation = els.orient.value;
+      const align = els.align.value;
+
+      w = clamp(isFinite(w) ? w : 4, 0.5, 20);
+      h = clamp(isFinite(h) ? h : 6, 0.5, 30);
+      pad = clamp(isFinite(pad) ? pad : 0.2, 0, Math.min(w,h)/2 - 0.01);
+
+      // Swap label dims for orientation so preview/print match expectations
+      const labelW = orientation === 'landscape' ? h : w;
+      const labelH = orientation === 'landscape' ? w : h;
+
+      setCSSVars(labelW, labelH, pad);
+      updatePageSizeCSS(w, h, orientation);
+      applyAlignment(align);
+      syncText();
+
+      const p1 = bestFitFontPx(els.previewSpan, els.previewInner);
+      const p2 = bestFitFontPx(els.printSpan, els.printInner);
+
+      const ok = p1.minFits && p2.minFits;
+      els.overflowWarn.style.display = ok ? 'none' : 'block';
+      els.status.textContent = ok ? `Fit: ${Math.round(p2.fontPx)}px` : `Text too large`;
+    }
+
+    function printNow(){
+      autosizeTextarea();
+      updateAll();
+      const pa = document.getElementById('printArea');
+      pa.style.left = '0';
+      pa.style.top = '0';
+      window.print();
+      pa.style.left = '-99999px';
+      pa.style.top = '-99999px';
+    }
+
+    // Events
+    [els.w, els.h, els.pad, els.orient, els.align].forEach(el => {
+      el.addEventListener('input', () => { autosizeTextarea(); updateAll(); });
+      el.addEventListener('change', () => { autosizeTextarea(); updateAll(); });
+    });
+
+    // Text changes: autosize in stacked mode and re-fit
+    els.txt.addEventListener('input', () => {
+      autosizeTextarea();
+      updateAll();
+    });
+
+    window.addEventListener('resize', () => {
+      clearTimeout(window.__labelResizeT);
+      window.__labelResizeT = setTimeout(() => {
+        autosizeTextarea();
+        updateAll();
+      }, 80);
+    });
+
+    els.printBtn.addEventListener('click', printNow);
+
+    els.resetBtn.addEventListener('click', () => {
+      els.w.value = '4';
+      els.h.value = '6';
+      els.pad.value = '0.20';
+      els.orient.value = 'portrait';
+      els.align.value = 'center';
+      autosizeTextarea();
+      updateAll();
+    });
+
+    // Init
+    autosizeTextarea();
+    updateAll();
+  </script>
+</body>
+</html>
