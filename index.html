@@ -279,6 +279,33 @@
       .app{ display:none !important; }
       #printOverlay{ display:block !important; }
     }
+  
+    /* Offscreen print root (kept "warm" for iOS printing) */
+    #printRoot{
+      position:fixed;
+      left:-10000px;
+      top:0;
+      opacity:0;
+      pointer-events:none;
+      z-index:-1;
+    }
+    #printRoot .printLabel{ position:relative; }
+
+    @media print{
+      /* Hide app UI in print */
+      body > .wrap{ display:none !important; }
+      #printOverlay{ display:none !important; } /* legacy */
+      #printRoot{
+        position:static !important;
+        left:auto !important;
+        top:auto !important;
+        opacity:1 !important;
+        pointer-events:auto !important;
+        z-index:auto !important;
+      }
+      #printRoot[aria-hidden="true"]{ aria-hidden:false; }
+    }
+
   </style>
 </head>
 
@@ -358,9 +385,8 @@ Rollo</textarea>
   </div>
 
   <div id="printOverlay" aria-hidden="true"></div>
-  <iframe id="printFrame" style="position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none;"></iframe>
-
-  <script>
+  <div id="printRoot" aria-hidden="true"></div>
+<script>
     const els = {
       w: document.getElementById('w'),
       h: document.getElementById('h'),
@@ -512,7 +538,7 @@ Rollo</textarea>
 
       const snapshot = { labelW, labelH, pad, align, text, orientation };
       // Keep the print iframe "warm" so iOS can print within the user gesture.
-      try { preparePrintFrame(snapshot); } catch(e) {}
+      try { renderPrintRoot(snapshot); } catch(e) {}
       return snapshot;
     }
 
@@ -561,107 +587,54 @@ Rollo</textarea>
     let __printing = false;
     function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
     function nextFrame(){ return new Promise(r => requestAnimationFrame(() => r())); }
-    const printFrame = document.getElementById('printFrame');
+    const printRoot = document.getElementById('printRoot');
 
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
-    }
+    function renderPrintRoot({ labelW, labelH, pad, align, text, orientation }){
+      // Keep the printable DOM in the main document so iOS Safari can reliably print it
+      // within the user gesture (no async needed).
+      printRoot.innerHTML = "";
+      printRoot.setAttribute("aria-hidden", "true");
 
-    function buildPrintHTML({ labelW, labelH, pad, align, text, orientation }){
-      const safeText = escapeHtml(text).replaceAll('\n', '<br/>');
-      return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Print Label</title>
-  <style>
-    :root{
-      --label-w-in:${labelW};
-      --label-h-in:${labelH};
-      --padding-in:${pad};
-    }
-    html,body{ margin:0; padding:0; background:#fff; }
-    @page{ size:auto; margin:0; }
+      const label = document.createElement("div");
+      label.className = "printLabel";
+      // Size in inches using CSS vars already set via setCSSVars()
+      // but also set explicit size so it lays out offscreen consistently.
+      label.style.width = `calc(${labelW} * 1in)`;
+      label.style.height = `calc(${labelH} * 1in)`;
 
-    .printLabel{
-      width: calc(var(--label-w-in) * 1in);
-      height: calc(var(--label-h-in) * 1in);
-      position:absolute;
-      left:0; top:0;
-      background:#fff;
-      color:#000;
-    }
-    .printInner{
-      position:absolute;
-      inset: calc(var(--padding-in) * 1in);
-      overflow:hidden;
-      padding:0;
-    }
-    .rotator{
-      position:absolute;
-      left:50%; top:50%;
-      transform-origin:center;
-      display:flex;
-      align-items:center;
-      justify-content:${align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center'};
-      width:100%;
-      height:100%;
-      padding-left:${align === 'left' ? '0.10in' : '0'};
-      padding-right:${align === 'right' ? '0.10in' : '0'};
-      transform: translate(-50%, -50%) ${orientation === 'landscape' ? 'rotate(90deg)' : ''};
-    }
-    .printSpan{
-      display:inline-block;
-      font-weight:800;
-      line-height:1.05;
-      white-space:pre;
-      word-break:keep-all;
-      hyphens:none;
-      text-align:${align};
-      font-size:24pt; /* JS will override */
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    }
-  </style>
-</head>
-<body>
-  <div class="printLabel">
-    <div class="printInner" id="inner">
-      <div class="rotator">
-        <span class="printSpan" id="span">${safeText}</span>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-    }
+      const inner = document.createElement("div");
+      inner.className = "printInner";
 
-    function preparePrintFrame(snapshot){
-      const win = printFrame.contentWindow;
-      const doc = win.document;
+      const rotator = document.createElement("div");
+      rotator.className = "rotator " + (orientation === "landscape" ? "landscape" : "portrait");
 
-      doc.open();
-      doc.write(buildPrintHTML(snapshot));
-      doc.close();
+      const span = document.createElement("span");
+      span.className = "printSpan";
+      span.textContent = text;
 
-      const inner = win.document.getElementById('inner');
-      const span  = win.document.getElementById('span');
-      if (!inner || !span) return false;
+      span.style.textAlign = align;
+      rotator.style.justifyContent =
+        (align === "left") ? "flex-start" :
+        (align === "right") ? "flex-end" : "center";
 
-      // Force layout synchronously (helps iOS/WebKit)
+      rotator.style.paddingLeft  = (align === "left")  ? "0.10in" : "0";
+      rotator.style.paddingRight = (align === "right") ? "0.10in" : "0";
+
+      rotator.appendChild(span);
+      inner.appendChild(rotator);
+      label.appendChild(inner);
+      printRoot.appendChild(label);
+
+      // Force layout synchronously and size text for print container
       void inner.offsetHeight;
-
       bestFitFontPt(span, inner);
-
-      // Force layout again after font-size mutation
       void inner.offsetHeight;
 
-      return true;
+      // Set a size so WebKit doesn't treat it as non-renderable
+      printRoot.style.width = `calc(${labelW} * 1in)`;
+      printRoot.style.height = `calc(${labelH} * 1in)`;
+
+      return { inner, span };
     }
 
     function printNow(){
@@ -669,14 +642,13 @@ Rollo</textarea>
       __printing = true;
 
       autosizeTextarea();
-      const snapshot = updateAll(); // updateAll also keeps the print frame warm
+      const snapshot = updateAll(); // updateAll will call renderPrintRoot(snapshot)
 
-      // Safety: if frame wasn’t ready for any reason, attempt once more.
-      preparePrintFrame(snapshot);
+      // Safety: ensure print DOM is ready (sync)
+      try { renderPrintRoot(snapshot); } catch(e) {}
 
-      const win = printFrame.contentWindow;
-      win.focus();
-      win.print();
+      // Print synchronously inside the user gesture (important for iOS Safari)
+      window.print();
 
       // iOS afterprint is unreliable; reset gate after a short delay.
       setTimeout(() => { __printing = false; }, 800);
