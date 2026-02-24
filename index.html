@@ -358,6 +358,7 @@ Rollo</textarea>
   </div>
 
   <div id="printOverlay" aria-hidden="true"></div>
+  <iframe id="printFrame" style="position:fixed;right:0;bottom:0;width:0;height:0;border:0;"></iframe>
 
   <script>
     const els = {
@@ -557,6 +558,96 @@ Rollo</textarea>
     let __printing = false;
     function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
     function nextFrame(){ return new Promise(r => requestAnimationFrame(() => r())); }
+    const printFrame = document.getElementById('printFrame');
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function buildPrintHTML({ labelW, labelH, pad, align, text, orientation }){
+      const safeText = escapeHtml(text).replaceAll('\n', '<br/>');
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Print Label</title>
+  <style>
+    :root{
+      --label-w-in:${labelW};
+      --label-h-in:${labelH};
+      --padding-in:${pad};
+    }
+    html,body{ margin:0; padding:0; background:#fff; }
+    @page{ size:auto; margin:0; }
+
+    .printLabel{
+      width: calc(var(--label-w-in) * 1in);
+      height: calc(var(--label-h-in) * 1in);
+      position: absolute;
+      left: 0; top: 0;
+      background:#fff;
+      color:#000;
+    }
+    .printInner{
+      position:absolute;
+      inset: calc(var(--padding-in) * 1in);
+      overflow:hidden;
+      padding:0;
+    }
+    .rotator{
+      position:absolute;
+      left:50%; top:50%;
+      transform-origin:center;
+      display:flex;
+      align-items:center;
+      justify-content:${align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center'};
+      width:100%;
+      height:100%;
+      padding-left:${align === 'left' ? '0.10in' : '0'};
+      padding-right:${align === 'right' ? '0.10in' : '0'};
+      transform: translate(-50%, -50%) ${orientation === 'landscape' ? 'rotate(90deg)' : ''};
+    }
+    .printSpan{
+      display:inline-block;
+      font-weight:800;
+      line-height:1.05;
+      white-space:pre;
+      word-break:keep-all;
+      hyphens:none;
+      text-align:${align};
+      font-size:24pt;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="printLabel">
+    <div class="printInner" id="inner">
+      <div class="rotator">
+        <span class="printSpan" id="span">${safeText}</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+    }
+
+    async function waitForFrameReady(win){
+      await nextFrame();
+      await nextFrame();
+      try {
+        if (win.document.fonts && win.document.fonts.ready) {
+          await win.document.fonts.ready;
+        }
+      } catch {}
+      await nextFrame();
+    }
 
     async function printNow(){
       if (__printing) return;
@@ -565,27 +656,28 @@ Rollo</textarea>
       autosizeTextarea();
       const snapshot = updateAll();
 
-      const { inner, span } = buildPrintOverlay(snapshot);
+      const doc = printFrame.contentWindow.document;
+      doc.open();
+      doc.write(buildPrintHTML(snapshot));
+      doc.close();
 
-      await nextFrame();
-      await nextFrame();
+      const win = printFrame.contentWindow;
 
-      void inner.offsetHeight;
+      await waitForFrameReady(win);
+
+      const inner = win.document.getElementById('inner');
+      const span  = win.document.getElementById('span');
 
       bestFitFontPt(span, inner);
 
       await nextFrame();
-      await sleep(220);
+      await sleep(120);
 
-      const cleanup = () => {
-        teardownPrintOverlay();
-        __printing = false;
-      };
+      win.focus();
+      win.print();
 
-      window.addEventListener("afterprint", cleanup, { once: true });
-
-      window.print();
-      setTimeout(cleanup, 2000);
+      // iOS afterprint is unreliable; reset gate after a short delay.
+      setTimeout(() => { __printing = false; }, 800);
     }
 
     // Events
