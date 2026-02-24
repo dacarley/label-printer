@@ -342,41 +342,7 @@
 
 
     @media print{
-      html,body{ margin:0 !important; padding:0 !important; background:#fff !important; }
-      .app{ display:none !important; }
-      #printOverlay{ display:block !important; }
-    }
-  
-    /* Offscreen print root (kept "warm" for iOS printing) */
-    #printRoot{
-      position:fixed;
-      left:-10000px;
-      top:0;
-      opacity:0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      pointer-events:none;
-      z-index:-1;
-    }
-    #printRoot .printLabel{ position:relative; }
-
-    @media print{
-      /* Hide app UI in print */
-      body > .wrap{ display:none !important; }
-      #printOverlay{ display:none !important; } /* legacy */
-      #printRoot{
-        position:static !important;
-        left:auto !important;
-        top:auto !important;
-        opacity:1 !important;
-        pointer-events:auto !important;
-        z-index:auto !important;
-      }
-      #printRoot[aria-hidden="true"]{ aria-hidden:false; }
-    }
-
-  
-    @media print{ /* FORCE_PRINT_COLORS */
+      /* Force a single-page print surface sized to the label */
       html, body{
         margin:0 !important;
         padding:0 !important;
@@ -384,47 +350,47 @@
         color:#000 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        min-height: 0 !important;
-        height: auto !important;
-      }
 
-      body{
+        width:  calc(var(--label-w-in) * 1in) !important;
+        height: calc(var(--label-h-in) * 1in) !important;
+
         overflow:hidden !important;
       }
 
-      /* Hide app UI in print */
+      /* Hide all app UI */
       body > .wrap{ display:none !important; }
-      #printOverlay{ display:none !important; } /* legacy */
+      #printOverlay{ display:none !important; } /* legacy overlay */
 
-      /* Pin the print root to the page so it doesn't create extra flow height */
+      /* Make print root the only visible thing and keep it out of normal flow */
       #printRoot{
-        position:fixed !important;
+        position:absolute !important;
         left:0 !important;
         top:0 !important;
         opacity:1 !important;
         pointer-events:auto !important;
         z-index:auto !important;
 
-        width: calc(var(--label-w-in) * 1in) !important;
+        width:  calc(var(--label-w-in) * 1in) !important;
         height: calc(var(--label-h-in) * 1in) !important;
 
         padding:0 !important;
         margin:0 !important;
       }
 
-      #printRoot .printLabel{
-        position:fixed !important;
-        left:0 !important;
-        top:0 !important;
-      }
-
-      /* Disable safe-area padding in print */
-      .app, .wrap{
-        padding-bottom: 0 !important;
-      }
+      /* Ensure nothing adds extra height */
+      .app, .wrap{ padding-bottom:0 !important; }
     }
+      #printRoot[aria-hidden="true"]{ aria-hidden:false; }
+    }
+
+  
+    @media print{ /* FORCE_PRINT_COLORS */
+      html, body{
+        background:#fff !important;
+        color:#000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
     }
 
   </style>
