@@ -358,7 +358,7 @@ Rollo</textarea>
   </div>
 
   <div id="printOverlay" aria-hidden="true"></div>
-  <iframe id="printFrame" style="position:fixed;right:0;bottom:0;width:0;height:0;border:0;"></iframe>
+  <iframe id="printFrame" style="position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none;"></iframe>
 
   <script>
     const els = {
@@ -510,7 +510,10 @@ Rollo</textarea>
       els.overflowWarn.style.display = p.minFits ? 'none' : 'block';
       els.status.textContent = p.minFits ? `Fit: ${Math.round(p.fontPx)}px` : `Text too large`;
 
-      return { labelW, labelH, pad, align, text, orientation };
+      const snapshot = { labelW, labelH, pad, align, text, orientation };
+      // Keep the print iframe "warm" so iOS can print within the user gesture.
+      try { preparePrintFrame(snapshot); } catch(e) {}
+      return snapshot;
     }
 
     function buildPrintOverlay({ labelW, labelH, pad, align, text, orientation }){
@@ -589,8 +592,8 @@ Rollo</textarea>
     .printLabel{
       width: calc(var(--label-w-in) * 1in);
       height: calc(var(--label-h-in) * 1in);
-      position: absolute;
-      left: 0; top: 0;
+      position:absolute;
+      left:0; top:0;
       background:#fff;
       color:#000;
     }
@@ -621,7 +624,7 @@ Rollo</textarea>
       word-break:keep-all;
       hyphens:none;
       text-align:${align};
-      font-size:24pt;
+      font-size:24pt; /* JS will override */
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
   </style>
@@ -638,41 +641,40 @@ Rollo</textarea>
 </html>`;
     }
 
-    async function waitForFrameReady(win){
-      await nextFrame();
-      await nextFrame();
-      try {
-        if (win.document.fonts && win.document.fonts.ready) {
-          await win.document.fonts.ready;
-        }
-      } catch {}
-      await nextFrame();
-    }
+    function preparePrintFrame(snapshot){
+      const win = printFrame.contentWindow;
+      const doc = win.document;
 
-    async function printNow(){
-      if (__printing) return;
-      __printing = true;
-
-      autosizeTextarea();
-      const snapshot = updateAll();
-
-      const doc = printFrame.contentWindow.document;
       doc.open();
       doc.write(buildPrintHTML(snapshot));
       doc.close();
 
-      const win = printFrame.contentWindow;
-
-      await waitForFrameReady(win);
-
       const inner = win.document.getElementById('inner');
       const span  = win.document.getElementById('span');
+      if (!inner || !span) return false;
+
+      // Force layout synchronously (helps iOS/WebKit)
+      void inner.offsetHeight;
 
       bestFitFontPt(span, inner);
 
-      await nextFrame();
-      await sleep(120);
+      // Force layout again after font-size mutation
+      void inner.offsetHeight;
 
+      return true;
+    }
+
+    function printNow(){
+      if (__printing) return;
+      __printing = true;
+
+      autosizeTextarea();
+      const snapshot = updateAll(); // updateAll also keeps the print frame warm
+
+      // Safety: if frame wasn’t ready for any reason, attempt once more.
+      preparePrintFrame(snapshot);
+
+      const win = printFrame.contentWindow;
       win.focus();
       win.print();
 
