@@ -195,6 +195,7 @@
       hyphens: none;
       text-align:center;
       font-size: 32px; /* JS overrides */
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
 
     .warn{
@@ -226,11 +227,30 @@
     #printOverlay .printInner{
       position:absolute;
       inset: calc(var(--padding-in) * 1in);
+      overflow:hidden;
+      padding:0;
+    }
+
+    /* Centered rotator (portrait or rotated landscape) */
+    #printOverlay .rotator{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform-origin:center;
       display:flex;
       align-items:center;
       justify-content:center;
-      overflow:hidden;
-      padding:0;
+      width:100%;
+      height:100%;
+    }
+
+    #printOverlay .rotator.portrait{
+      transform: translate(-50%, -50%);
+    }
+
+    /* Landscape is implemented by rotating content on the same portrait page */
+    #printOverlay .rotator.landscape{
+      transform: translate(-50%, -50%) rotate(90deg);
     }
 
     #printOverlay .printSpan{
@@ -278,7 +298,7 @@
           <label for="orient">Orientation</label>
           <select id="orient">
             <option value="portrait" selected>Portrait</option>
-            <option value="landscape">Landscape</option>
+            <option value="landscape">Landscape (rotate content)</option>
           </select>
         </div>
         <div>
@@ -302,7 +322,7 @@
 Rollo</textarea>
 
           <div class="hint">
-            macOS Safari print preview may still show Letter if Paper Size is set to 8.5×11. That’s a Safari print setting. Chrome/iOS should be correct.
+            Landscape mode rotates the content on the same portrait label page (more consistent across Safari/iOS).
           </div>
 
           <div id="overflowWarn" class="warn" style="display:none;">
@@ -381,6 +401,7 @@ Rollo</textarea>
     function applyAlignment(alignment){
       const a = alignment;
       els.previewSpan.style.textAlign = a;
+
       const justify = (a === 'left') ? 'flex-start' : (a === 'right') ? 'flex-end' : 'center';
       els.previewInner.style.justifyContent = justify;
 
@@ -389,7 +410,7 @@ Rollo</textarea>
       els.previewInner.style.paddingRight = (a === 'right') ? inset : '0';
     }
 
-    function measureSpanFits(spanEl, containerEl, fontPx){
+    function measureSpanFitsPx(spanEl, containerEl, fontPx){
       spanEl.style.fontSize = fontPx + 'px';
       const s = spanEl.getBoundingClientRect();
       const c = containerEl.getBoundingClientRect();
@@ -403,41 +424,46 @@ Rollo</textarea>
       let lo = MIN_PX, hi = MAX_PX, best = MIN_PX;
       while (lo <= hi){
         const mid = (lo + hi) >> 1;
-        if (measureSpanFits(spanEl, containerEl, mid)){
+        if (measureSpanFitsPx(spanEl, containerEl, mid)){
           best = mid; lo = mid + 1;
         } else {
           hi = mid - 1;
         }
       }
       spanEl.style.fontSize = best + 'px';
-      const minFits = measureSpanFits(spanEl, containerEl, MIN_PX);
+      const minFits = measureSpanFitsPx(spanEl, containerEl, MIN_PX);
       spanEl.style.fontSize = best + 'px';
       return { fontPx: best, minFits };
     }
 
-    // Print overlay uses PT to behave better in print engines (esp. Safari)
-    function measureSpanFitsPt(spanEl, containerEl, fontPt){
-      spanEl.style.fontSize = fontPt + 'pt';
-      const s = spanEl.getBoundingClientRect();
-      const c = containerEl.getBoundingClientRect();
-      return (s.width <= c.width) && (s.height <= c.height);
+    // --- PT fitter for print overlay, with landscape support via swapped bounds ---
+    function availableBox(innerEl, isLandscape){
+      const r = innerEl.getBoundingClientRect();
+      return isLandscape ? { w: r.height, h: r.width } : { w: r.width, h: r.height };
     }
 
-    function bestFitFontPt(spanEl, containerEl){
+    function measureSpanFitsPt(spanEl, innerEl, fontPt, isLandscape){
+      spanEl.style.fontSize = fontPt + 'pt';
+      const s = spanEl.getBoundingClientRect();
+      const box = availableBox(innerEl, isLandscape);
+      return (s.width <= box.w) && (s.height <= box.h);
+    }
+
+    function bestFitFontPt(spanEl, innerEl, isLandscape){
       const MIN_PT = 4;
       const MAX_PT = 800;
 
       let lo = MIN_PT, hi = MAX_PT, best = MIN_PT;
       while (lo <= hi){
         const mid = Math.floor((lo + hi) / 2);
-        if (measureSpanFitsPt(spanEl, containerEl, mid)){
+        if (measureSpanFitsPt(spanEl, innerEl, mid, isLandscape)){
           best = mid; lo = mid + 1;
         } else {
           hi = mid - 1;
         }
       }
       spanEl.style.fontSize = best + 'pt';
-      const minFits = measureSpanFitsPt(spanEl, containerEl, MIN_PT);
+      const minFits = measureSpanFitsPt(spanEl, innerEl, MIN_PT, isLandscape);
       spanEl.style.fontSize = best + 'pt';
       return { fontPt: best, minFits };
     }
@@ -452,15 +478,16 @@ Rollo</textarea>
       let w = parseFloat(els.w.value || '4');
       let h = parseFloat(els.h.value || '6');
       let pad = parseFloat(els.pad.value || '0.2');
-      const orientation = els.orient.value;
       const align = els.align.value;
 
       w = clamp(isFinite(w) ? w : 4, 0.5, 20);
       h = clamp(isFinite(h) ? h : 6, 0.5, 30);
       pad = clamp(isFinite(pad) ? pad : 0.2, 0, Math.min(w,h)/2 - 0.01);
 
-      const labelW = orientation === 'landscape' ? h : w;
-      const labelH = orientation === 'landscape' ? w : h;
+      // IMPORTANT: we do NOT swap dimensions for landscape anymore.
+      // Landscape is implemented by rotating content on the SAME portrait page.
+      const labelW = w;
+      const labelH = h;
 
       setCSSVars(labelW, labelH, pad);
       applyAlignment(align);
@@ -470,14 +497,12 @@ Rollo</textarea>
       els.overflowWarn.style.display = p.minFits ? 'none' : 'block';
       els.status.textContent = p.minFits ? `Fit: ${Math.round(p.fontPx)}px` : `Text too large`;
 
-      return { labelW, labelH, pad, align, text };
+      return { labelW, labelH, pad, align, text, orientation: els.orient.value };
     }
 
-    function buildPrintOverlay({ labelW, labelH, pad, align, text }){
-      // Set vars so overlay uses correct inch sizing
+    function buildPrintOverlay({ labelW, labelH, pad, align, text, orientation }){
       setCSSVars(labelW, labelH, pad);
 
-      // Clear + build
       els.overlay.innerHTML = "";
       els.overlay.style.display = "block";
       els.overlay.setAttribute("aria-hidden", "false");
@@ -488,25 +513,29 @@ Rollo</textarea>
       const inner = document.createElement("div");
       inner.className = "printInner";
 
+      const rotator = document.createElement("div");
+      rotator.className = "rotator " + (orientation === "landscape" ? "landscape" : "portrait");
+
       const span = document.createElement("span");
       span.className = "printSpan";
       span.textContent = text;
 
-      // alignment
+      // text alignment inside the rotated coordinate space
       span.style.textAlign = align;
-      inner.style.justifyContent =
+      rotator.style.justifyContent =
         (align === "left") ? "flex-start" :
         (align === "right") ? "flex-end" : "center";
 
-      // small inset for left/right like preview
-      inner.style.paddingLeft  = (align === "left")  ? "0.10in" : "0";
-      inner.style.paddingRight = (align === "right") ? "0.10in" : "0";
+      // inset for left/right
+      rotator.style.paddingLeft  = (align === "left")  ? "0.10in" : "0";
+      rotator.style.paddingRight = (align === "right") ? "0.10in" : "0";
 
-      inner.appendChild(span);
+      rotator.appendChild(span);
+      inner.appendChild(rotator);
       label.appendChild(inner);
       els.overlay.appendChild(label);
 
-      return { inner, span };
+      return { inner, span, isLandscape: orientation === "landscape" };
     }
 
     function teardownPrintOverlay(){
@@ -519,31 +548,45 @@ Rollo</textarea>
       return new Promise(resolve => requestAnimationFrame(() => resolve()));
     }
 
+    let __printing = false;
+
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+    function nextFrame(){ return new Promise(r => requestAnimationFrame(() => r())); }
+
     async function printNow(){
+      if (__printing) return;
+      __printing = true;
+
       autosizeTextarea();
       const snapshot = updateAll();
 
-      // Build overlay and fit font AFTER it exists in DOM
-      const { inner, span } = buildPrintOverlay(snapshot);
+      const { inner, span, isLandscape } = buildPrintOverlay(snapshot);
 
-      // Wait for layout
-      await nextPaint();
-      await nextPaint();
+      // iOS: give the browser time to paint the overlay + text
+      await nextFrame();
+      await nextFrame();
 
-      // Fit in PT (more stable for printing)
-      bestFitFontPt(span, inner);
+      // Force layout flush
+      void inner.offsetHeight;
 
-      // iOS likes a small delay before print
-      const cleanup = () => teardownPrintOverlay();
+      // Fit after layout exists
+      bestFitFontPt(span, inner, isLandscape);
 
-      // afterprint is not 100% reliable on iOS, but works on desktop.
+      // One more paint + small delay (this is the key for iOS reliability)
+      await nextFrame();
+      await sleep(220); // tweak 150–300ms if you want
+
+      const cleanup = () => {
+        teardownPrintOverlay();
+        __printing = false;
+      };
+
+      // afterprint is unreliable on iOS, but good on desktop
       window.addEventListener("afterprint", cleanup, { once: true });
 
-      setTimeout(() => {
-        window.print();
-        // fallback cleanup in case afterprint doesn't fire
-        setTimeout(cleanup, 1500);
-      }, 60);
+      // Print, then fallback cleanup
+      window.print();
+      setTimeout(cleanup, 2000);
     }
 
     // Events
