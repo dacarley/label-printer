@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Label Print (Vanilla)</title>
 
   <style>
@@ -23,9 +23,14 @@
     html,body{ height:100%; margin:0; 
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+    
+      background: var(--bg);
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     body{
       background:var(--bg);
+      padding-bottom: env(safe-area-inset-bottom);
       color:var(--fg);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       line-height:1.35;
