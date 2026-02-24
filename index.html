@@ -385,6 +385,86 @@
       }
     }
 
+  
+    .mainBtns{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .seg{
+      display:inline-flex;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(255,255,255,0.03);
+    }
+    .segBtn{
+      border:0;
+      background: transparent;
+      color: var(--muted);
+      padding:10px 12px;
+      font-weight:800;
+      cursor:pointer;
+      min-width: 150px;
+    }
+    .segBtn[aria-pressed="true"]{
+      color: var(--fg);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .modalBackdrop{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000000;
+      padding: 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+    .modalBackdrop.open{ display:flex; }
+
+    .modal{
+      width: min(560px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+      padding: 14px;
+    }
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 10px;
+    }
+    .modalTitle{
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .iconBtn{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--fg);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .modalControls{
+      margin-top: 12px;
+    }
+    .modalFooter{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+    }
+
   </style>
 </head>
 
@@ -392,53 +472,12 @@
   <div class="app">
     <div class="panel">
       <h1>Label Printer</h1>
-      <div class="presetRow">
-        <div class="presetBtns">
-          <button type="button" class="secondary presetBtn" data-w="4" data-h="6" data-pad="0.20">4×6</button>
-          <button type="button" class="secondary presetBtn" data-w="2" data-h="1" data-pad="0.10">2×1</button>
-        </div>
-        <div class="status" id="status">Ready</div>
-      </div>
-
-      <details id="settingsDetails" class="settings">
-        <summary>Label settings</summary>
-
-        <div class="row controls">
-          <div>
-            <label for="w">Width (in)</label>
-            <input id="w" type="number" min="0.5" step="0.01" value="4" inputmode="decimal" />
-          </div>
-          <div>
-            <label for="h">Height (in)</label>
-            <input id="h" type="number" min="0.5" step="0.01" value="6" inputmode="decimal" />
-          </div>
-          <div>
-            <label for="pad">Padding (in)</label>
-            <input id="pad" type="number" min="0" step="0.01" value="0.20" inputmode="decimal" />
-          </div>
-          <div>
-            <label for="orient">Orientation</label>
-            <select id="orient">
-              <option value="portrait" selected>Portrait</option>
-              <option value="landscape">Landscape (rotate content)</option>
-            </select>
-          </div>
-          <div>
-            <label for="align">Text align</label>
-            <select id="align">
-              <option value="center" selected>Center</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-            </select>
-          </div>
-        </div>
-      </details>
-
       <div class="row">
         <div>
           <label for="txt">Label text</label>
           <textarea id="txt" spellcheck="false" placeholder="Type your label text here...">Hello
 Rollo</textarea>
+          <input id="orient" type="hidden" value="portrait" />
 
           <div id="overflowWarn" class="warn" style="display:none;">
             This text can’t fit even at the minimum font size. Shorten a line or increase label size.
@@ -446,9 +485,54 @@ Rollo</textarea>
         </div>
       </div>
 
+      <div class="row mainBtns">
+        <div class="seg" role="group" aria-label="Orientation">
+          <button type="button" class="segBtn" id="portraitBtn" aria-pressed="true">Portrait (O=)</button>
+          <button type="button" class="segBtn" id="landscapeBtn" aria-pressed="false">Landscape (=O)</button>
+        </div>
+
+        <button id="sizeBtn" class="secondary" type="button">Label size…</button>
+      </div>
+
       <div class="row">
         <button id="printBtn" class="primary" type="button">Print</button>
       </div>
+
+      <!-- Size modal -->
+      <div id="sizeModal" class="modalBackdrop" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle">
+          <div class="modalHeader">
+            <div class="modalTitle" id="sizeModalTitle">Label size</div>
+            <button type="button" id="closeModalBtn" class="iconBtn" aria-label="Close">✕</button>
+          </div>
+
+          <div class="presetBtns">
+            <button type="button" class="secondary presetBtn" data-w="4" data-h="6" data-pad="0.20">4×6</button>
+            <button type="button" class="secondary presetBtn" data-w="2" data-h="1" data-pad="0.10">2×1</button>
+          </div>
+
+          <div class="row controls modalControls">
+            <div>
+              <label for="w">Width (in)</label>
+              <input id="w" type="number" min="0.5" step="0.01" value="4" inputmode="decimal" />
+            </div>
+            <div>
+              <label for="h">Height (in)</label>
+              <input id="h" type="number" min="0.5" step="0.01" value="6" inputmode="decimal" />
+            </div>
+            <div>
+              <label for="pad">Padding (in)</label>
+              <input id="pad" type="number" min="0" step="0.01" value="0.20" inputmode="decimal" />
+            </div>
+          </div>
+
+          <div class="modalFooter">
+            <button type="button" id="doneModalBtn" class="primary">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status" id="status">Ready</div>
 </div>
 
     <div class="panel">
@@ -472,17 +556,20 @@ Rollo</textarea>
       w: document.getElementById('w'),
       h: document.getElementById('h'),
       pad: document.getElementById('pad'),
-      orient: document.getElementById('orient'),
-      align: document.getElementById('align'),
-      txt: document.getElementById('txt'),
+      orient: document.getElementById('orient'),      txt: document.getElementById('txt'),
 
       previewInner: document.getElementById('previewInner'),
       previewRotator: document.getElementById('previewRotator'),
       previewSpan: document.getElementById('previewSpan'),
 
       printBtn: document.getElementById('printBtn'),
-      presetBtns: Array.from(document.querySelectorAll('.presetBtn')),
-      settingsDetails: document.getElementById('settingsDetails'),      status: document.getElementById('status'),
+      portraitBtn: document.getElementById('portraitBtn'),
+      landscapeBtn: document.getElementById('landscapeBtn'),
+      sizeBtn: document.getElementById('sizeBtn'),
+      modal: document.getElementById('sizeModal'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      doneModalBtn: document.getElementById('doneModalBtn'),
+      presetBtns: Array.from(document.querySelectorAll('.presetBtn')),      status: document.getElementById('status'),
       overflowWarn: document.getElementById('overflowWarn'),
 
       overlay: document.getElementById('printOverlay')
@@ -509,11 +596,7 @@ Rollo</textarea>
             w: els.w.value,
             h: els.h.value,
             pad: els.pad.value,
-            orient: els.orient.value,
-            align: els.align.value,
-            txt: els.txt.value,
-            settingsOpen: !!(els.settingsDetails && els.settingsDetails.open),
-          };
+            orient: els.orient.value,            txt: els.txt.value,          };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         }catch(e){}
       }, 120);
@@ -524,11 +607,7 @@ Rollo</textarea>
       if (typeof s.w === "string") els.w.value = s.w;
       if (typeof s.h === "string") els.h.value = s.h;
       if (typeof s.pad === "string") els.pad.value = s.pad;
-      if (typeof s.orient === "string") els.orient.value = s.orient;
-      if (typeof s.align === "string") els.align.value = s.align;
-      if (typeof s.txt === "string") els.txt.value = s.txt;
-      if (els.settingsDetails && typeof s.settingsOpen === "boolean") els.settingsDetails.open = s.settingsOpen;
-    }
+      if (typeof s.orient === "string") els.orient.value = s.orient;      if (typeof s.txt === "string") els.txt.value = s.txt;    }
 
 
     function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
@@ -638,7 +717,7 @@ Rollo</textarea>
       let w = parseFloat(els.w.value || '4');
       let h = parseFloat(els.h.value || '6');
       let pad = parseFloat(els.pad.value || '0.2');
-      const align = els.align.value;
+      const align = "center";
       const orientation = els.orient.value;
 
       w = clamp(isFinite(w) ? w : 4, 0.5, 20);
@@ -649,9 +728,7 @@ Rollo</textarea>
       const labelW = w;
       const labelH = h;
 
-      setCSSVars(labelW, labelH, pad);
-      applyAlignment(align);
-      setPreviewRotation(orientation);
+      setCSSVars(labelW, labelH, pad);      setPreviewRotation(orientation);
 
       const text = syncPreviewText();
 
@@ -822,11 +899,48 @@ Rollo</textarea>
         autosizeTextarea();
         updateAll();
         saveSettings();
+        closeModal();
       });
     });
 
+
+    function openModal(){
+      els.modal.classList.add('open');
+      els.modal.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal(){
+      els.modal.classList.remove('open');
+      els.modal.setAttribute('aria-hidden', 'true');
+    }
+
+    els.sizeBtn.addEventListener('click', () => {
+      openModal();
+    });
+    els.closeModalBtn.addEventListener('click', closeModal);
+    els.doneModalBtn.addEventListener('click', () => {
+      closeModal();
+      saveSettings();
+    });
+    // Click outside the modal to close
+    els.modal.addEventListener('click', (e) => {
+      if (e.target === els.modal) closeModal();
+    });
+
+    function setOrientation(val){
+      els.orient.value = val;
+      const isPortrait = val === "portrait";
+      els.portraitBtn.setAttribute('aria-pressed', isPortrait ? 'true' : 'false');
+      els.landscapeBtn.setAttribute('aria-pressed', isPortrait ? 'false' : 'true');
+      autosizeTextarea();
+      updateAll();
+      saveSettings();
+    }
+
+    els.portraitBtn.addEventListener('click', () => setOrientation("portrait"));
+    els.landscapeBtn.addEventListener('click', () => setOrientation("landscape"));
+
 // Events
-    [els.w, els.h, els.pad, els.orient, els.align].forEach(el => {
+    [els.w, els.h, els.pad].forEach(el => {
       el.addEventListener('input', () => { autosizeTextarea(); updateAll(); saveSettings(); });
       el.addEventListener('change', () => { autosizeTextarea(); updateAll(); saveSettings(); });
     });
@@ -847,12 +961,10 @@ Rollo</textarea>
 
     els.printBtn.addEventListener('click', printNow);
 
-    if (els.settingsDetails){
-      els.settingsDetails.addEventListener('toggle', saveSettings);
-    }
-
     // Init
     applySettings(loadSettings());
+    // Sync orientation toggle UI
+    try { setOrientation(els.orient.value || 'portrait'); } catch(e) {}
     autosizeTextarea();
     updateAll();
     saveSettings();
