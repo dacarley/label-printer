@@ -378,11 +378,53 @@
   
     @media print{ /* FORCE_PRINT_COLORS */
       html, body{
+        margin:0 !important;
+        padding:0 !important;
         background:#fff !important;
         color:#000 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        min-height: 0 !important;
+        height: auto !important;
       }
+
+      body{
+        overflow:hidden !important;
+      }
+
+      /* Hide app UI in print */
+      body > .wrap{ display:none !important; }
+      #printOverlay{ display:none !important; } /* legacy */
+
+      /* Pin the print root to the page so it doesn't create extra flow height */
+      #printRoot{
+        position:fixed !important;
+        left:0 !important;
+        top:0 !important;
+        opacity:1 !important;
+        pointer-events:auto !important;
+        z-index:auto !important;
+
+        width: calc(var(--label-w-in) * 1in) !important;
+        height: calc(var(--label-h-in) * 1in) !important;
+
+        padding:0 !important;
+        margin:0 !important;
+      }
+
+      #printRoot .printLabel{
+        position:fixed !important;
+        left:0 !important;
+        top:0 !important;
+      }
+
+      /* Disable safe-area padding in print */
+      .app, .wrap{
+        padding-bottom: 0 !important;
+      }
+    }
     }
 
   </style>
