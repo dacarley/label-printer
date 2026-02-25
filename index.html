@@ -415,54 +415,83 @@
       background: rgba(255,255,255,0.08);
     }
 
+    
     .modalBackdrop{
       position:fixed;
       inset:0;
       display:none;
-      align-items:flex-end;
+      align-items:center;
       justify-content:center;
       background: rgba(0,0,0,0.55);
       z-index: 1000000;
-      padding: 16px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+      padding: 24px;
     }
     .modalBackdrop.open{ display:flex; }
 
     .modal{
-      width: min(560px, 100%);
+      width: min(520px, 100%);
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 16px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-      padding: 14px;
+      padding: 18px;
     }
-    .modalHeader{
+
+    @media (max-width: 640px){
+      .modalBackdrop{ padding:0; }
+      .modal{
+        width:100%;
+        height:100%;
+        border-radius:0;
+        display:flex;
+        flex-direction:column;
+      }
+      .modalFooter{
+        margin-top:auto;
+      }
+    }
+
+    .presetBtns{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
       gap:12px;
-      margin-bottom: 10px;
+      margin-bottom:14px;
     }
-    .modalTitle{
-      font-weight: 900;
-      font-size: 18px;
-    }
-    .iconBtn{
-      border:1px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: var(--fg);
-      border-radius: 12px;
-      padding: 8px 10px;
-      cursor:pointer;
-      font-weight: 900;
-    }
-    .modalControls{
-      margin-top: 12px;
-    }
+
+
+  
     .modalFooter{
       display:flex;
-      justify-content:flex-end;
+      gap:12px;
+      justify-content:space-between;
       margin-top: 12px;
+    }
+    .modalFooter .secondary,
+    .modalFooter .primary{
+      flex:1 1 0;
+      width:auto;
+    }
+
+  
+    @media (min-width: 900px){
+      .mainBtns{
+        flex-wrap:nowrap;
+      }
+      .mainBtns .secondary{ margin-left:auto; }
+      .inlinePrimary{
+        width:auto;
+        min-width: 180px;
+      }
+    }
+    @media (max-width: 899px){
+      .inlinePrimary{
+        width:100%;
+      }
+      .mainBtns{
+        justify-content:stretch;
+      }
+      #sizeBtn{
+        width:100%;
+      }
     }
 
   </style>
@@ -474,7 +503,7 @@
       <h1>Label Printer</h1>
       <div class="row">
         <div>
-          <label for="txt">Label text</label>
+          
           <textarea id="txt" spellcheck="false" placeholder="Type your label text here...">Hello
 Rollo</textarea>
           <input id="orient" type="hidden" value="portrait" />
@@ -485,26 +514,24 @@ Rollo</textarea>
         </div>
       </div>
 
-      <div class="row mainBtns">
-        <div class="seg" role="group" aria-label="Orientation">
-          <button type="button" class="segBtn" id="portraitBtn" aria-pressed="true">Portrait (O=)</button>
-          <button type="button" class="segBtn" id="landscapeBtn" aria-pressed="false">Landscape (=O)</button>
-        </div>
-
-        <button id="sizeBtn" class="secondary" type="button">Label size…</button>
-      </div>
-
       <div class="row">
-        <button id="printBtn" class="primary" type="button">Print</button>
+        <div class="seg" role="group" aria-label="Orientation">
+          <button type="button" class="segBtn" id="portraitBtn" aria-pressed="true">Portrait</button>
+          <button type="button" class="segBtn" id="landscapeBtn" aria-pressed="false">Landscape</button>
+        </div>
       </div>
 
-      <!-- Size modal -->
+      <div class="row mainBtns">
+        <button id="sizeBtn" class="secondary" type="button">Label size…</button>
+
+        <button id="printBtn" class="primary inlinePrimary" type="button">Print</button>
+      </div>
+<!-- Size modal -->
       <div id="sizeModal" class="modalBackdrop" aria-hidden="true">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle">
           <div class="modalHeader">
             <div class="modalTitle" id="sizeModalTitle">Label size</div>
-            <button type="button" id="closeModalBtn" class="iconBtn" aria-label="Close">✕</button>
-          </div>
+</div>
 
           <div class="presetBtns">
             <button type="button" class="secondary presetBtn" data-w="4" data-h="6" data-pad="0.20">4×6</button>
@@ -527,12 +554,11 @@ Rollo</textarea>
           </div>
 
           <div class="modalFooter">
-            <button type="button" id="doneModalBtn" class="primary">Done</button>
+            <button type="button" id="cancelModalBtn" class="secondary">Cancel</button>
+            <button type="button" id="okModalBtn" class="primary">OK</button>
           </div>
         </div>
       </div>
-
-      <div class="status" id="status">Ready</div>
 </div>
 
     <div class="panel">
@@ -566,11 +592,9 @@ Rollo</textarea>
       portraitBtn: document.getElementById('portraitBtn'),
       landscapeBtn: document.getElementById('landscapeBtn'),
       sizeBtn: document.getElementById('sizeBtn'),
-      modal: document.getElementById('sizeModal'),
-      closeModalBtn: document.getElementById('closeModalBtn'),
-      doneModalBtn: document.getElementById('doneModalBtn'),
-      presetBtns: Array.from(document.querySelectorAll('.presetBtn')),      status: document.getElementById('status'),
-      overflowWarn: document.getElementById('overflowWarn'),
+      modal: document.getElementById('sizeModal'),      okModalBtn: document.getElementById('okModalBtn'),
+      cancelModalBtn: document.getElementById('cancelModalBtn'),
+      presetBtns: Array.from(document.querySelectorAll('.presetBtn')),      overflowWarn: document.getElementById('overflowWarn'),
 
       overlay: document.getElementById('printOverlay')
     };
@@ -735,8 +759,6 @@ Rollo</textarea>
       const p = bestFitFontPreviewPx(els.previewSpan, els.previewInner);
 
       els.overflowWarn.style.display = p.minFits ? 'none' : 'block';
-      els.status.textContent = p.minFits ? `Fit: ${Math.round(p.fontPx)}px` : `Text too large`;
-
       const snapshot = { labelW, labelH, pad, align, text, orientation };
       // Keep the print iframe "warm" so iOS can print within the user gesture.
       try { renderPrintRoot(snapshot); } catch(e) {}
@@ -915,9 +937,8 @@ Rollo</textarea>
 
     els.sizeBtn.addEventListener('click', () => {
       openModal();
-    });
-    els.closeModalBtn.addEventListener('click', closeModal);
-    els.doneModalBtn.addEventListener('click', () => {
+    });    els.cancelModalBtn.addEventListener('click', closeModal);
+    els.okModalBtn.addEventListener('click', () => {
       closeModal();
       saveSettings();
     });
