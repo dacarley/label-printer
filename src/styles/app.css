@@ -103,6 +103,7 @@ label {
 }
 
 input[type="number"],
+input[type="text"],
 select,
 textarea,
 button {
@@ -234,14 +235,59 @@ button:active {
 	width: 100%;
 	height: 100%;
 	display: flex;
-	align-items: center;
-	justify-content: center;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
 	transform-origin: center;
 	transform: translate(-50%, -50%);
 }
 
 .previewRotator.landscape {
+	width: calc((var(--label-h-in) - 2 * var(--padding-in)) * 96px);
+	height: calc((var(--label-w-in) - 2 * var(--padding-in)) * 96px);
 	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* Corner text: upper-right of oriented label, ~1/4" tall, fixed size, no wrap */
+.cornerTextSpan {
+	display: block;
+	width: 100%;
+	height: 36px; /* ≈ 0.375in at 96dpi preview scale */
+	line-height: 36px;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+	font-size: 21px;
+	font-weight: 600;
+	padding: 0 4px;
+	flex-shrink: 0;
+	font-family:
+		system-ui,
+		-apple-system,
+		Segoe UI,
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+}
+
+/* Spacer at bottom matching corner text height to keep main text vertically centered */
+.cornerTextSpacer {
+	display: block;
+	width: 100%;
+	height: 36px;
+	flex-shrink: 0;
+}
+
+/* Main text area: fills remaining space, centers the auto-sized span */
+.previewMainArea {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
 }
 
 .labelTextSpan {
@@ -303,8 +349,9 @@ button:active {
 	top: 50%;
 	transform-origin: center;
 	display: flex;
-	align-items: center;
-	justify-content: center;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
 	width: 100%;
 	height: 100%;
 }
@@ -314,7 +361,51 @@ button:active {
 }
 
 #printOverlay .rotator.landscape {
+	width: calc((var(--label-h-in) - 2 * var(--padding-in)) * 1in);
+	height: calc((var(--label-w-in) - 2 * var(--padding-in)) * 1in);
 	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+#printOverlay .cornerTextSpacer,
+#printRoot .cornerTextSpacer {
+	display: block;
+	width: 100%;
+	height: 0.375in;
+	flex-shrink: 0;
+}
+
+#printOverlay .cornerTextSpan {
+	display: block;
+	width: 100%;
+	height: 0.375in;
+	line-height: 0.375in;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+	font-size: 21pt;
+	font-weight: 600;
+	padding: 0 4pt;
+	flex-shrink: 0;
+	color: #000;
+	-webkit-text-fill-color: #000;
+	font-family:
+		system-ui,
+		-apple-system,
+		Segoe UI,
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+}
+
+#printOverlay .printMainArea {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
 }
 
 #printOverlay .printSpan {
@@ -369,8 +460,9 @@ button:active {
 	top: 50%;
 	transform-origin: center;
 	display: flex;
-	align-items: center;
-	justify-content: center;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
 	width: 100%;
 	height: 100%;
 }
@@ -380,7 +472,45 @@ button:active {
 }
 
 #printRoot .rotator.landscape {
+	width: calc((var(--label-h-in) - 2 * var(--padding-in)) * 1in);
+	height: calc((var(--label-w-in) - 2 * var(--padding-in)) * 1in);
 	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+#printRoot .cornerTextSpan {
+	display: block;
+	width: 100%;
+	height: 0.375in;
+	line-height: 0.375in;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+	font-size: 21pt;
+	font-weight: 600;
+	padding: 0 4pt;
+	flex-shrink: 0;
+	color: #000;
+	-webkit-text-fill-color: #000;
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+	font-family:
+		system-ui,
+		-apple-system,
+		Segoe UI,
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+}
+
+#printRoot .printMainArea {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
 }
 
 #printRoot .printSpan {
@@ -477,9 +607,11 @@ button:active {
 .mainBtns {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: 12px;
-	flex-wrap: wrap;
+}
+
+.mainBtns .secondary {
+	flex: 1;
 }
 
 .seg {
@@ -566,33 +698,8 @@ button:active {
 	width: auto;
 }
 
-@media (min-width: 900px) {
-	.mainBtns {
-		flex-wrap: nowrap;
-	}
-
-	.mainBtns .secondary {
-		margin-left: auto;
-	}
-
-	.inlinePrimary {
-		width: auto;
-		min-width: 180px;
-	}
-}
-
-@media (max-width: 899px) {
-	.inlinePrimary {
-		width: 100%;
-	}
-
-	.mainBtns {
-		justify-content: stretch;
-	}
-
-	#sizeBtn {
-		width: 100%;
-	}
+#printBtn {
+	width: 100%;
 }
 
 .buildSha {

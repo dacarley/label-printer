@@ -14,6 +14,12 @@
       <h1>Label Printer</h1>
       <div class="row">
         <div>
+          <label for="cornerTxt">Corner text (optional)</label>
+          <input id="cornerTxt" type="text" placeholder="e.g. FRAGILE" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
           <textarea id="txt" placeholder="Type your label text here..." spellcheck="false"></textarea>
           <input id="orient" type="hidden" value="portrait" />
           <div class="warn" id="overflowWarn" style="display:none;">
@@ -31,7 +37,10 @@
 
       <div class="row mainBtns">
         <button class="secondary" id="sizeBtn" type="button">Label size…</button>
-        <button class="primary inlinePrimary" id="printBtn" type="button">Print</button>
+        <button class="secondary" id="clearBtn" type="button">Clear</button>
+      </div>
+      <div class="row">
+        <button class="primary" id="printBtn" type="button">Print</button>
       </div>
 
       <!-- Size modal -->
@@ -72,7 +81,11 @@
         <div class="label" id="previewLabel">
           <div class="labelInner" id="previewInner">
             <div class="previewRotator" id="previewRotator">
-              <span class="labelTextSpan" id="previewSpan"></span>
+              <span class="cornerTextSpan" id="previewCornerSpan"></span>
+              <div class="previewMainArea" id="previewMainArea">
+                <span class="labelTextSpan" id="previewSpan"></span>
+              </div>
+              <div class="cornerTextSpacer" id="previewCornerSpacer" style="display:none;"></div>
             </div>
           </div>
         </div>

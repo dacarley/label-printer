@@ -17,21 +17,40 @@ export function renderPrintRoot(printRoot: HTMLDivElement, s: LabelSettings) {
 	const rotator = document.createElement("div");
 	rotator.className = `rotator ${s.orientation === "landscape" ? "landscape" : "portrait"}`;
 
+	// Corner text
+	const cornerSpan = document.createElement("span");
+	cornerSpan.className = "cornerTextSpan";
+	cornerSpan.textContent = s.cornerText;
+	cornerSpan.style.display = s.cornerText ? "" : "none";
+	rotator.appendChild(cornerSpan);
+
+	// Main text area
+	const mainArea = document.createElement("div");
+	mainArea.className = "printMainArea";
+
 	const span = document.createElement("span");
 	span.className = "printSpan";
 	span.textContent = s.text;
 
 	span.style.textAlign = s.align;
-	rotator.style.justifyContent =
+	mainArea.style.justifyContent =
 		s.align === "left"
 			? "flex-start"
 			: s.align === "right"
 				? "flex-end"
 				: "center";
-	rotator.style.paddingLeft = s.align === "left" ? "0.10in" : "0";
-	rotator.style.paddingRight = s.align === "right" ? "0.10in" : "0";
+	mainArea.style.paddingLeft = s.align === "left" ? "0.10in" : "0";
+	mainArea.style.paddingRight = s.align === "right" ? "0.10in" : "0";
 
-	rotator.appendChild(span);
+	mainArea.appendChild(span);
+	rotator.appendChild(mainArea);
+
+	// Spacer mirrors corner text height so main text stays vertically centered
+	const spacer = document.createElement("div");
+	spacer.className = "cornerTextSpacer";
+	spacer.style.display = s.cornerText ? "" : "none";
+	rotator.appendChild(spacer);
+
 	inner.appendChild(rotator);
 	label.appendChild(inner);
 	printRoot.appendChild(label);
@@ -39,8 +58,8 @@ export function renderPrintRoot(printRoot: HTMLDivElement, s: LabelSettings) {
 	// Ensure layout exists before fitting
 	void inner.offsetHeight;
 
-	// Fit using points for printing
-	bestFitFont(span, inner, "pt", 4, 800);
+	// Fit using points for printing (against mainArea, not inner, to respect corner text space)
+	bestFitFont(span, mainArea, "pt", 4, 800);
 
 	void inner.offsetHeight;
 

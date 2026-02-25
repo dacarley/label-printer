@@ -8,6 +8,7 @@ export type LabelSettings = {
 	orientation: Orientation;
 	text: string;
 	align: Align;
+	cornerText: string;
 };
 
 export type RawFormState = {
@@ -17,4 +18,5 @@ export type RawFormState = {
 	orientation: Orientation;
 	text: string;
 	align: Align;
+	cornerText: string;
 };

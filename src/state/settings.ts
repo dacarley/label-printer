@@ -34,8 +34,17 @@ export function normalizeSettings(raw: RawFormState): LabelSettings {
 			? raw.align
 			: "center";
 	const text = normalizeText(raw.text);
+	const cornerText = normalizeText(raw.cornerText ?? "").replace(/\n.*/s, ""); // single line only
 
-	return { widthIn: wIn, heightIn: hIn, paddingIn, orientation, text, align };
+	return {
+		widthIn: wIn,
+		heightIn: hIn,
+		paddingIn,
+		orientation,
+		text,
+		align,
+		cornerText,
+	};
 }
 
 export function loadSettings(): Partial<RawFormState> | null {

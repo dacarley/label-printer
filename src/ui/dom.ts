@@ -3,12 +3,17 @@ export type Refs = {
 	h: HTMLInputElement;
 	pad: HTMLInputElement;
 	txt: HTMLTextAreaElement;
+	cornerTxt: HTMLInputElement;
 
 	previewInner: HTMLDivElement;
 	previewRotator: HTMLDivElement;
+	previewCornerSpan: HTMLSpanElement;
+	previewCornerSpacer: HTMLDivElement;
+	previewMainArea: HTMLDivElement;
 	previewSpan: HTMLSpanElement;
 
 	printBtn: HTMLButtonElement;
+	clearBtn: HTMLButtonElement;
 	portraitBtn: HTMLButtonElement;
 	landscapeBtn: HTMLButtonElement;
 
@@ -37,12 +42,17 @@ export function getRefs(): Refs {
 		h: req<HTMLInputElement>("h"),
 		pad: req<HTMLInputElement>("pad"),
 		txt: req<HTMLTextAreaElement>("txt"),
+		cornerTxt: req<HTMLInputElement>("cornerTxt"),
 
 		previewInner: req<HTMLDivElement>("previewInner"),
 		previewRotator: req<HTMLDivElement>("previewRotator"),
+		previewCornerSpan: req<HTMLSpanElement>("previewCornerSpan"),
+		previewCornerSpacer: req<HTMLDivElement>("previewCornerSpacer"),
+		previewMainArea: req<HTMLDivElement>("previewMainArea"),
 		previewSpan: req<HTMLSpanElement>("previewSpan"),
 
 		printBtn: req<HTMLButtonElement>("printBtn"),
+		clearBtn: req<HTMLButtonElement>("clearBtn"),
 		portraitBtn: req<HTMLButtonElement>("portraitBtn"),
 		landscapeBtn: req<HTMLButtonElement>("landscapeBtn"),
 

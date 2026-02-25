@@ -2,6 +2,7 @@ import { bestFitFont } from "./layout/fitText";
 import { createPrintNow } from "./print/printNow";
 import {
 	applyAlignment,
+	setCornerText,
 	setCSSVars,
 	setPreviewText,
 	setRotation,
@@ -56,6 +57,7 @@ export function startApp() {
 		orientation: "portrait",
 		text: "",
 		align: "center",
+		cornerText: "",
 	};
 
 	// Hydrate from storage
@@ -70,6 +72,7 @@ export function startApp() {
 	els.h.value = String(initial.h);
 	els.pad.value = String(initial.pad);
 	els.txt.value = String(initial.text);
+	els.cornerTxt.value = String(initial.cornerText ?? "");
 
 	// Orientation buttons represent state; no select in current UI.
 	let orientation: Orientation =
@@ -83,6 +86,7 @@ export function startApp() {
 			orientation,
 			text: els.txt.value,
 			align: "center",
+			cornerText: els.cornerTxt.value,
 		};
 	}
 
@@ -104,12 +108,19 @@ export function startApp() {
 
 		// Vars + preview layout
 		setCSSVars(s);
-		applyAlignment(els.previewSpan, els.previewRotator, s.align);
+		applyAlignment(els.previewSpan, els.previewMainArea, s.align);
 		setRotation(els.previewRotator, s.orientation);
 		setPreviewText(els.previewSpan, s.text);
+		setCornerText(els.previewCornerSpan, s.cornerText, els.previewCornerSpacer);
 
 		// Fit preview text in px
-		const fit = bestFitFont(els.previewSpan, els.previewInner, "px", 6, 1200);
+		const fit = bestFitFont(
+			els.previewSpan,
+			els.previewMainArea,
+			"px",
+			6,
+			1200,
+		);
 		if (!fit.minFits) show(els.overflowWarn);
 		else hide(els.overflowWarn);
 
@@ -132,6 +143,7 @@ export function startApp() {
 			els.w.blur();
 			els.h.blur();
 			els.pad.blur();
+			els.cornerTxt.blur();
 		} catch {}
 	}
 
@@ -187,6 +199,15 @@ export function startApp() {
 		save();
 	});
 
+	// Clear
+	els.clearBtn.addEventListener("click", () => {
+		els.txt.value = "";
+		els.cornerTxt.value = "";
+		autosizeTextarea(els.txt);
+		updateAll();
+		save();
+	});
+
 	// Print
 	els.printBtn.addEventListener("click", () => {
 		// Keep everything synchronous in this handler.
@@ -207,6 +228,7 @@ export function startApp() {
 	els.h.addEventListener("input", onInput);
 	els.pad.addEventListener("input", onInput);
 	els.txt.addEventListener("input", onInput);
+	els.cornerTxt.addEventListener("input", onInput);
 
 	// Resize/orientation change (debounced)
 	let resizeT: number | null = null;
