@@ -32,8 +32,21 @@ function closeModal(modal: HTMLElement) {
 	modal.setAttribute("aria-hidden", "true");
 }
 
+declare const __BUILD_SHA__: string;
+declare const __BUILD_TIME__: string;
+
 export function startApp() {
 	const els = getRefs();
+
+	const timeLabel = __BUILD_TIME__
+		? new Date(__BUILD_TIME__).toLocaleString(undefined, {
+				dateStyle: "short",
+				timeStyle: "short",
+			})
+		: "";
+	els.buildSha.textContent = ["sha:", __BUILD_SHA__, timeLabel]
+		.filter(Boolean)
+		.join(" · ");
 
 	// Defaults (match your current behavior)
 	const defaults: RawFormState = {

@@ -22,6 +22,7 @@ export type Refs = {
 
 	overlay: HTMLDivElement;
 	printRoot: HTMLDivElement;
+	buildSha: HTMLDivElement;
 };
 
 function req<T extends HTMLElement>(id: string): T {
@@ -57,5 +58,6 @@ export function getRefs(): Refs {
 
 		overlay: req<HTMLDivElement>("printOverlay"),
 		printRoot: req<HTMLDivElement>("printRoot"),
+		buildSha: req<HTMLDivElement>("buildSha"),
 	};
 }
