@@ -1,15 +1,17 @@
 {
-  "name": "label-printer-vanilla-ts-singlefile",
+  "name": "label-printer",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "biome lint --write ./src",
     "format": "biome format --write ./src",
-    "check": "biome check --write ./src"
+    "check": "biome check --write ./src",
+    "ci:check": "biome ci ./src"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.4",
