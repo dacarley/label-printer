@@ -290,7 +290,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 **Confirmed hardware (from owner):** [Amazon B09VF4Z2WQ](https://www.amazon.com/dp/B09VF4Z2WQ) = **Rollo Wireless X1040** — Wi‑Fi + USB direct-thermal label printer, AirPrint-certified, 203 dpi, media widths ~1.57–4.1 in (4×6 and 2×1 among defaults). This app’s presets match those two.
 
-**Still open:** which client OS/browser is the primary path to that printer (iOS Safari AirPrint vs macOS/desktop, etc.) — see Q1.
+**Confirmed primary clients (from owner):** **Chrome on iOS** and **Safari on iOS** (AirPrint to the X1040). Other devices/browsers are occasional secondary targets — keep the print path portable, but optimize and regression-test iOS first.
 
 **Print path implemented (required unless you change it)**
 
@@ -360,7 +360,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 ## 6. Open questions (do not invent answers)
 
-1. **Primary print client (hardware answered):** Printer is **Rollo Wireless X1040** ([B09VF4Z2WQ](https://www.amazon.com/dp/B09VF4Z2WQ)). Which client do we optimize for first on that printer — iOS Safari AirPrint, macOS Safari, Chrome/desktop, or Windows?
+1. ~~**Primary print target**~~ **Answered:** Hardware = **Rollo Wireless X1040**; primary clients = **Chrome on iOS** and **Safari on iOS**; other devices/browsers secondary.
 2. **Size modal Cancel:** Should Cancel revert W/H/Pad to the values from when the modal opened?
 3. **Print “done”:** Is success “dialog opened with correct `@page` + label DOM,” or “user confirmed and exactly one label page printed with no SHA/extra page”?
 4. **Empty print:** Should Print be disabled or warn when main text (and corner text?) are empty?
