@@ -380,6 +380,6 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 Please reply with:
 
 - Accept / accept with edits to this spec
-- Answers to the open questions you care about (especially Q1–Q3)
+- Answers to the open questions you care about (especially Q2–Q3; Q1 is answered)
 
 Implementation starts only after that.
