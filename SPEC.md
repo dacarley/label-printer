@@ -347,7 +347,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 | State | Spec (current) |
 | --- | --- |
-| Empty label | Allowed to print |
+| Empty label (main + corner both empty) | Print stays enabled; app must tell the user there is nothing to print. Whether the system print UI still opens after that message is pending a clarifier under Q4. |
 | Overflow | Warn in editor; do not block print |
 | Storage failure | Silent; app still works for the session |
 | Print cancel | Return to editor; no error toast (no completion tracking today) |
@@ -367,7 +367,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 1. ~~**Primary print target**~~ **Answered:** Hardware = **Rollo Wireless X1040**; primary clients = **Chrome on iOS** and **Safari on iOS**; other devices/browsers secondary.
 2. ~~**Size modal Cancel**~~ **Answered:** Proper cancel with restore — Cancel/Esc/backdrop discard edits and restore W/H/Pad (and preview) to values from when the modal opened. OK commits.
 3. ~~**Print “done”**~~ **Answered:** Success = in-app Print handed the system UI a correct job (`#printRoot` + `@page` size). No completion detection beyond that; owner reports physical/AirPrint bugs if seen. Clean-page bugs (SHA / extra page) still must be fixed so that job is clean.
-4. **Empty print:** Should Print be disabled or warn when main text (and corner text?) are empty?
+4. **Empty print (partial):** Print stays enabled; when main and corner text are both empty, say there is nothing to print. **Clarifier pending:** after that message, still open the system print UI, or stop until there is text?
 5. **Overflow:** Should overflow block printing, or only warn (current)?
 6. **Clear:** Should Clear also reset orientation and/or size to defaults?
 7. **Alignment:** Is center-only permanent, or should left/right controls return?
