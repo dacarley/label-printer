@@ -24,8 +24,8 @@ export type Refs = {
 	presetBtns: HTMLButtonElement[];
 
 	overflowWarn: HTMLDivElement;
+	printMsg: HTMLDivElement;
 
-	overlay: HTMLDivElement;
 	printRoot: HTMLDivElement;
 	buildSha: HTMLDivElement;
 };
@@ -65,8 +65,8 @@ export function getRefs(): Refs {
 		),
 
 		overflowWarn: req<HTMLDivElement>("overflowWarn"),
+		printMsg: req<HTMLDivElement>("printMsg"),
 
-		overlay: req<HTMLDivElement>("printOverlay"),
 		printRoot: req<HTMLDivElement>("printRoot"),
 		buildSha: req<HTMLDivElement>("buildSha"),
 	};

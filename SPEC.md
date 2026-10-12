@@ -1,6 +1,6 @@
 # Label Printer — Behavior Spec (draft for acceptance)
 
-Status: **draft — all interview questions answered; awaiting explicit acceptance before any implementation.**  
+Status: **Accepted** (owner, 2026-10-12). Implementation in progress against this document.  
 Evidence date: 2026-10-11 (interview closed 2026-10-12).  
 Live site: https://dacarley.github.io/label-printer/  
 Repo HEAD / live deploy: `f1d676a26d7a76176f3ea4ae62cfbad7887c1c2e` (`f1d676a`, 2026-02-25).
@@ -384,10 +384,4 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 
 All interview items (Q1–Q12) are answered above.
 
-Please reply with one of:
-
-- **Accept** this spec as-is → implementation may begin
-- **Accept with edits** (list the edits)
-- **Hold** (not ready)
-
-Implementation starts only after explicit acceptance.
+**Accepted as-is** by the owner on 2026-10-12. Implementation may proceed against this document.

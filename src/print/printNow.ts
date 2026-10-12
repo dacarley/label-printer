@@ -8,28 +8,36 @@ export type PrintDeps = {
 	blur: () => void;
 };
 
+function preparePrint(deps: PrintDeps, snapshot: LabelSettings) {
+	try {
+		renderPrintRoot(deps.printRoot, snapshot);
+	} catch {}
+	deps.blur();
+	setPageSizeInches(snapshot.widthIn, snapshot.heightIn);
+}
+
 export function createPrintNow(deps: PrintDeps) {
 	let printing = false;
+
+	// Ctrl+P / system print still need @page size + warm print DOM.
+	window.addEventListener("beforeprint", () => {
+		preparePrint(deps, deps.getSnapshot());
+	});
+	window.addEventListener("afterprint", () => {
+		try {
+			clearPageSize();
+		} catch {}
+	});
 
 	return function printNow() {
 		if (printing) return;
 		printing = true;
 
 		const snapshot = deps.getSnapshot();
-
-		// Ensure print DOM is fully up-to-date synchronously inside the user gesture.
-		try {
-			renderPrintRoot(deps.printRoot, snapshot);
-		} catch {}
-
-		// Avoid iOS zoom/resize weirdness caused by focused inputs during print.
-		deps.blur();
-
-		// Preserve scroll (print UI can cause a jump)
 		const sx = window.scrollX;
 		const sy = window.scrollY;
 
-		setPageSizeInches(snapshot.widthIn, snapshot.heightIn);
+		preparePrint(deps, snapshot);
 		window.print();
 
 		window.setTimeout(() => {

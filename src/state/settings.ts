@@ -29,10 +29,8 @@ export function normalizeSettings(raw: RawFormState): LabelSettings {
 
 	const orientation: Orientation =
 		raw.orientation === "landscape" ? "landscape" : "portrait";
-	const align: Align =
-		raw.align === "left" || raw.align === "right" || raw.align === "center"
-			? raw.align
-			: "center";
+	// Product is center-only; ignore any stored left/right.
+	const align: Align = "center";
 	const text = normalizeText(raw.text);
 	const cornerText = normalizeText(raw.cornerText ?? "").replace(/\n.*/s, ""); // single line only
 
