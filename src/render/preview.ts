@@ -1,3 +1,4 @@
+import { fitCornerText } from "../layout/fitCorner";
 import type { LabelSettings } from "../state/types";
 
 export function setCSSVars(s: LabelSettings) {
@@ -12,18 +13,15 @@ export function setCSSVars(s: LabelSettings) {
 	);
 }
 
-export function applyAlignment(
+/** Product is center-only; keep main text centered. */
+export function applyCenteredMain(
 	previewSpan: HTMLElement,
 	previewMainArea: HTMLElement,
-	align: LabelSettings["align"],
 ) {
-	previewSpan.style.textAlign = align;
-	(previewMainArea as HTMLElement).style.justifyContent =
-		align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center";
-	(previewMainArea as HTMLElement).style.paddingLeft =
-		align === "left" ? "0.10in" : "0";
-	(previewMainArea as HTMLElement).style.paddingRight =
-		align === "right" ? "0.10in" : "0";
+	previewSpan.style.textAlign = "center";
+	previewMainArea.style.justifyContent = "center";
+	previewMainArea.style.paddingLeft = "0";
+	previewMainArea.style.paddingRight = "0";
 }
 
 export function setRotation(
@@ -41,8 +39,7 @@ export function setCornerText(
 	cornerSpan: HTMLElement,
 	text: string,
 	spacer: HTMLElement,
+	containerEl: HTMLElement,
 ) {
-	cornerSpan.textContent = text;
-	cornerSpan.style.display = text ? "" : "none";
-	spacer.style.display = text ? "" : "none";
+	fitCornerText(cornerSpan, spacer, containerEl, text, "px", 6, 28);
 }

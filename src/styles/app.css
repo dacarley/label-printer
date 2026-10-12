@@ -248,12 +248,12 @@ button:active {
 	transform: translate(-50%, -50%) rotate(90deg);
 }
 
-/* Corner text: upper-right of oriented label, ~1/4" tall, fixed size, no wrap */
+/* Corner text: upper-right of oriented label; JS shrinks font/band to fit */
 .cornerTextSpan {
 	display: block;
 	width: 100%;
-	height: 36px; /* ≈ 0.375in at 96dpi preview scale */
-	line-height: 36px;
+	height: auto;
+	line-height: 1.2;
 	text-align: right;
 	white-space: nowrap;
 	overflow: hidden;
@@ -276,7 +276,7 @@ button:active {
 .cornerTextSpacer {
 	display: block;
 	width: 100%;
-	height: 36px;
+	height: auto;
 	flex-shrink: 0;
 }
 
@@ -317,116 +317,11 @@ button:active {
 	margin-top: 8px;
 }
 
-/* ---- Print overlay ---- */
-#printOverlay {
-	position: fixed;
-	inset: 0;
-	background: #fff;
-	display: none;
-	z-index: 999999;
-}
-
-#printOverlay .printLabel {
-	width: calc(var(--label-w-in) * 1in);
-	height: calc(var(--label-h-in) * 1in);
-	position: absolute;
-	left: 0;
-	top: 0;
-	background: #fff;
-	color: #000;
-}
-
-#printOverlay .printInner {
-	position: absolute;
-	inset: calc(var(--padding-in) * 1in);
-	overflow: hidden;
-	padding: 0;
-}
-
-#printOverlay .rotator {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform-origin: center;
-	display: flex;
-	flex-direction: column;
-	align-items: stretch;
-	justify-content: flex-start;
-	width: 100%;
-	height: 100%;
-}
-
-#printOverlay .rotator.portrait {
-	transform: translate(-50%, -50%);
-}
-
-#printOverlay .rotator.landscape {
-	width: calc((var(--label-h-in) - 2 * var(--padding-in)) * 1in);
-	height: calc((var(--label-w-in) - 2 * var(--padding-in)) * 1in);
-	transform: translate(-50%, -50%) rotate(90deg);
-}
-
-#printOverlay .cornerTextSpacer,
-#printRoot .cornerTextSpacer {
-	display: block;
-	width: 100%;
-	height: 0.375in;
-	flex-shrink: 0;
-}
-
-#printOverlay .cornerTextSpan {
-	display: block;
-	width: 100%;
-	height: 0.375in;
-	line-height: 0.375in;
-	text-align: right;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: clip;
-	font-size: 21pt;
-	font-weight: 600;
-	padding: 0 4pt;
-	flex-shrink: 0;
-	color: #000;
-	-webkit-text-fill-color: #000;
-	font-family:
-		system-ui,
-		-apple-system,
-		Segoe UI,
-		Roboto,
-		Helvetica,
-		Arial,
-		sans-serif;
-}
-
-#printOverlay .printMainArea {
-	flex: 1 1 0;
-	min-height: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	overflow: hidden;
-}
-
-#printOverlay .printSpan {
-	display: inline-block;
-	font-weight: 800;
-	line-height: 1.05;
-	white-space: pre;
-	overflow-wrap: normal;
-	word-break: keep-all;
-	hyphens: none;
+.printMsg {
+	color: #ffb86b;
+	font-size: 12px;
+	margin: 8px 0 0;
 	text-align: center;
-	font-size: 24pt;
-	/* JS overrides */
-	font-family:
-		system-ui,
-		-apple-system,
-		Segoe UI,
-		Roboto,
-		Helvetica,
-		Arial,
-		sans-serif;
 }
 
 @page {
@@ -477,11 +372,18 @@ button:active {
 	transform: translate(-50%, -50%) rotate(90deg);
 }
 
+#printRoot .cornerTextSpacer {
+	display: block;
+	width: 100%;
+	height: auto;
+	flex-shrink: 0;
+}
+
 #printRoot .cornerTextSpan {
 	display: block;
 	width: 100%;
-	height: 0.375in;
-	line-height: 0.375in;
+	height: auto;
+	line-height: 1.2;
 	text-align: right;
 	white-space: nowrap;
 	overflow: hidden;
@@ -539,23 +441,6 @@ button:active {
 	text-rendering: geometricPrecision;
 }
 
-@media print {
-	html,
-	body {
-		margin: 0;
-		padding: 0;
-		background: #fff;
-	}
-
-	.app {
-		display: none;
-	}
-
-	#printOverlay {
-		display: block;
-	}
-}
-
 /* Offscreen print root (kept "warm" for iOS printing) */
 #printRoot {
 	position: fixed;
@@ -573,16 +458,27 @@ button:active {
 }
 
 @media print {
-	/* Hide app UI in print */
-	body > .wrap {
+	html,
+	body {
+		margin: 0;
+		padding: 0;
+		height: auto;
+		min-height: 0;
+		background: #fff;
+		color: #000;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		overflow: hidden;
+	}
+
+	.app {
 		display: none;
 	}
 
-	#printOverlay {
+	.buildSha {
 		display: none;
 	}
 
-	/* legacy */
 	#printRoot {
 		position: static;
 		left: auto;
@@ -590,17 +486,9 @@ button:active {
 		opacity: 1;
 		pointer-events: auto;
 		z-index: auto;
-	}
-}
-
-@media print {
-	/* FORCE_PRINT_COLORS */
-	html,
-	body {
-		background: #fff;
-		color: #000;
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
+		width: auto;
+		height: auto;
+		overflow: hidden;
 	}
 }
 
