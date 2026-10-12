@@ -457,26 +457,26 @@ button:active {
 	position: relative;
 }
 
+/*
+ * Print layout for iOS Chrome/Safari AirPrint:
+ * - size the document exactly to the label (@page + html/body)
+ * - use absolute (not fixed): fixed often prints as a blank page on iOS
+ * - hide editor chrome so nothing adds a second page
+ */
 @media print {
-	/*
-	 * iOS Chrome/Safari: keep the label out of normal flow.
-	 * A static 4×6in block plus any leftover body height (safe-area,
-	 * line boxes from whitespace, min-height) creates a blank page 2.
-	 */
 	html,
 	body {
 		margin: 0;
 		padding: 0;
-		height: auto;
+		width: calc(var(--label-w-in) * 1in);
+		height: calc(var(--label-h-in) * 1in);
 		min-height: 0;
+		max-height: calc(var(--label-h-in) * 1in);
 		background: #fff;
 		color: #000;
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 		overflow: hidden;
-		/* Kill anonymous line boxes from whitespace between body children */
-		font-size: 0;
-		line-height: 0;
 	}
 
 	.app,
@@ -485,31 +485,39 @@ button:active {
 	}
 
 	#printRoot {
-		position: fixed;
+		position: absolute;
 		left: 0;
 		top: 0;
 		opacity: 1;
-		pointer-events: auto;
+		pointer-events: none;
 		z-index: 1;
-		width: calc(var(--label-w-in) * 1in);
-		height: calc(var(--label-h-in) * 1in);
+		width: 100%;
+		height: 100%;
 		margin: 0;
 		padding: 0;
 		overflow: hidden;
-		font-size: medium;
-		line-height: normal;
 	}
 
 	#printRoot .printLabel {
-		position: fixed;
+		position: absolute;
 		left: 0;
 		top: 0;
-		width: calc(var(--label-w-in) * 1in);
-		height: calc(var(--label-h-in) * 1in);
+		width: 100%;
+		height: 100%;
 		margin: 0;
 		padding: 0;
 		overflow: hidden;
 	}
+}
+
+/* Park print root on-page before iOS opens the dialog (JS toggles this). */
+html.is-printing #printRoot {
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 1;
+	pointer-events: none;
+	z-index: 1;
 }
 
 .mainBtns {

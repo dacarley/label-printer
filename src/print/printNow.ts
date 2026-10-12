@@ -16,19 +16,42 @@ function preparePrint(deps: PrintDeps, snapshot: LabelSettings) {
 	} catch {}
 	deps.blur();
 	setPageSizeInches(snapshot.widthIn, snapshot.heightIn);
+
+	// iOS: fixed/offscreen print roots often rasterize blank. Park the root
+	// on-page with absolute positioning before the print dialog opens.
+	const root = deps.printRoot;
+	root.style.position = "absolute";
+	root.style.left = "0";
+	root.style.top = "0";
+	root.style.opacity = "1";
+	root.style.pointerEvents = "none";
+	root.style.zIndex = "1";
+	document.documentElement.classList.add("is-printing");
+}
+
+function cleanupPrint(deps: PrintDeps) {
+	document.documentElement.classList.remove("is-printing");
+	try {
+		clearPageSize();
+	} catch {}
+	const root = deps.printRoot;
+	// Restore offscreen "warm" placement used between prints.
+	root.style.position = "";
+	root.style.left = "";
+	root.style.top = "";
+	root.style.opacity = "";
+	root.style.pointerEvents = "";
+	root.style.zIndex = "";
 }
 
 export function createPrintNow(deps: PrintDeps) {
 	let printing = false;
 
-	// Ctrl+P / system print still need @page size + warm print DOM.
 	window.addEventListener("beforeprint", () => {
 		preparePrint(deps, deps.getSnapshot());
 	});
 	window.addEventListener("afterprint", () => {
-		try {
-			clearPageSize();
-		} catch {}
+		cleanupPrint(deps);
 	});
 
 	return function printNow() {
@@ -43,9 +66,7 @@ export function createPrintNow(deps: PrintDeps) {
 		window.print();
 
 		window.setTimeout(() => {
-			try {
-				clearPageSize();
-			} catch {}
+			cleanupPrint(deps);
 		}, 1500);
 		window.setTimeout(() => window.scrollTo(sx, sy), 0);
 
