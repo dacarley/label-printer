@@ -368,7 +368,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 2. ~~**Size modal Cancel**~~ **Answered:** Proper cancel with restore — Cancel/Esc/backdrop discard edits and restore W/H/Pad (and preview) to values from when the modal opened. OK commits.
 3. ~~**Print “done”**~~ **Answered:** Success = in-app Print handed the system UI a correct job (`#printRoot` + `@page` size). No completion detection beyond that; owner reports physical/AirPrint bugs if seen. Clean-page bugs (SHA / extra page) still must be fixed so that job is clean.
 4. ~~**Empty print**~~ **Answered:** Print stays enabled. When main and corner text are both empty, say there is nothing to print and **do not** open the system print UI until there is text.
-5. **Overflow:** Should overflow block printing, or only warn (current)?
+5. ~~**Overflow**~~ **Answered:** Keep the overflow warning in the editor. On Print while overflowing, ask for confirmation before opening the system print UI (do not silently print; do not hard-block without a choice).
 6. **Clear:** Should Clear also reset orientation and/or size to defaults?
 7. **Alignment:** Is center-only permanent, or should left/right controls return?
 8. **Corner text on 2×1:** Keep fixed ~0.375 in band (clip), shrink corner text, or hide corner on small labels?
