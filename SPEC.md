@@ -376,7 +376,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 9. ~~**Default text**~~ **Answered:** Blank for first-time users (not `Hello`/`Rollo`). Blank fields show greyed placeholder/hint text in the inputs; placeholders are not printed.
 10. ~~**Additional Rollo presets**~~ **Answered:** Keep only **4×6** and **2×1** presets, plus custom W/H/Pad. No extra presets for now.
 11. ~~**Committed `dist/`**~~ **Answered:** Remove from git and gitignore `dist/`. Pages/CI builds on deploy; do not commit build output.
-12. **Landscape meaning on Rollo:** Confirm that “rotate content inside fixed WxH” matches how you load stock (vs swapping page width/height).
+12. ~~**Landscape meaning on Rollo**~~ **Answered:** Keep current behavior — Landscape rotates content 90° inside fixed WxH `@page` (e.g. still 4×6); do **not** swap page dimensions to 6×4.
 
 ---
 
