@@ -354,9 +354,11 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 ### 5.6 What “done” means for a print
 
-**As implemented today:** “done” means the app successfully reached `window.print()` with an up-to-date `#printRoot` and `@page` size. The app does **not** observe whether the user confirmed or cancelled, nor whether a physical label ejected.
+**Accepted:** a print is **done** when the in-app **Print** path has handed the system print UI a correct job: up-to-date `#printRoot` label DOM and `@page` sized to the current label, with zero margin.
 
-**Acceptance needs your call (Q3):** whether “done” stays at “print dialog opened correctly,” or must mean “user confirmed and one label page with no chrome/SHA/extra page.”
+The app does **not** observe whether the user confirmed or cancelled in the system dialog, nor whether a physical label ejected. Physical/AirPrint defects are reported by the owner when encountered.
+
+Known clean-page defects (build SHA on the printed page, content taller than one label → blank second page) remain **bugs to fix** so the job we hand off is actually clean — they are not a separate “done = physical success” requirement.
 
 ---
 
@@ -364,7 +366,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 1. ~~**Primary print target**~~ **Answered:** Hardware = **Rollo Wireless X1040**; primary clients = **Chrome on iOS** and **Safari on iOS**; other devices/browsers secondary.
 2. ~~**Size modal Cancel**~~ **Answered:** Proper cancel with restore — Cancel/Esc/backdrop discard edits and restore W/H/Pad (and preview) to values from when the modal opened. OK commits.
-3. **Print “done”:** Is success “dialog opened with correct `@page` + label DOM,” or “user confirmed and exactly one label page printed with no SHA/extra page”?
+3. ~~**Print “done”**~~ **Answered:** Success = in-app Print handed the system UI a correct job (`#printRoot` + `@page` size). No completion detection beyond that; owner reports physical/AirPrint bugs if seen. Clean-page bugs (SHA / extra page) still must be fixed so that job is clean.
 4. **Empty print:** Should Print be disabled or warn when main text (and corner text?) are empty?
 5. **Overflow:** Should overflow block printing, or only warn (current)?
 6. **Clear:** Should Clear also reset orientation and/or size to defaults?
@@ -382,6 +384,6 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 Please reply with:
 
 - Accept / accept with edits to this spec
-- Answers to the open questions you care about (especially Q2–Q3; Q1 is answered)
+- Answers to the open questions you care about (Q1–Q3 answered; continue from Q4)
 
 Implementation starts only after that.
