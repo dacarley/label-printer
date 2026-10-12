@@ -347,7 +347,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 | State | Spec (current) |
 | --- | --- |
-| Empty label (main + corner both empty) | Print stays enabled; app must tell the user there is nothing to print. Whether the system print UI still opens after that message is pending a clarifier under Q4. |
+| Empty label (main + corner both empty) | Print stays enabled; show that there is nothing to print; **do not** open the system print UI until there is text |
 | Overflow | Warn in editor; do not block print |
 | Storage failure | Silent; app still works for the session |
 | Print cancel | Return to editor; no error toast (no completion tracking today) |
