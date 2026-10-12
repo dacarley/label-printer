@@ -333,7 +333,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 | Control | Spec |
 | --- | --- |
-| Corner text | Optional; single visual line; upper area of oriented label; right-aligned; overflow clips |
+| Corner text | Optional; single visual line; upper area of oriented label; right-aligned; **font size shrinks to fit** the label (not a fixed band that clips on small sizes) |
 | Main text | Multiline; preserved whitespace; **always horizontally centered** (no align control); vertically centered in remaining area; auto-fit |
 | Portrait / Landscape | Portrait = no content rotation; Landscape = 90° content rotation inside fixed outer WxH page |
 | Label size… | Opens size modal |
