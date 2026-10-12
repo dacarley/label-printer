@@ -374,7 +374,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 7. ~~**Alignment**~~ **Answered:** Center-only permanently; no left/right controls.
 8. ~~**Corner text on small labels**~~ **Answered:** Shrink corner text to fit the label (do not keep a fixed ~0.375 in clipping band; do not hide).
 9. ~~**Default text**~~ **Answered:** Blank for first-time users (not `Hello`/`Rollo`). Blank fields show greyed placeholder/hint text in the inputs; placeholders are not printed.
-10. **Additional Rollo presets:** Add others (e.g. 3×1, 3×2, 2.25×1.25, round), or keep only 4×6 + 2×1 + custom?
+10. ~~**Additional Rollo presets**~~ **Answered:** Keep only **4×6** and **2×1** presets, plus custom W/H/Pad. No extra presets for now.
 11. **Committed `dist/`:** Should it be removed from git / gitignored, or regenerated on each release commit?
 12. **Landscape meaning on Rollo:** Confirm that “rotate content inside fixed WxH” matches how you load stock (vs swapping page width/height).
 
