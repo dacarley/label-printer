@@ -268,7 +268,7 @@ export function startApp() {
 
 	els.printBtn.addEventListener("click", () => {
 		autosizeTextarea(els.txt);
-		const s = updateAll();
+		updateAll();
 		save();
 
 		if (isLabelEmpty()) {
