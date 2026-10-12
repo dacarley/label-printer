@@ -1,7 +1,7 @@
 # Label Printer — Behavior Spec (draft for acceptance)
 
-Status: **draft — awaiting acceptance before any implementation.**  
-Evidence date: 2026-10-11.  
+Status: **draft — all interview questions answered; awaiting explicit acceptance before any implementation.**  
+Evidence date: 2026-10-11 (interview closed 2026-10-12).  
 Live site: https://dacarley.github.io/label-printer/  
 Repo HEAD / live deploy: `f1d676a26d7a76176f3ea4ae62cfbad7887c1c2e` (`f1d676a`, 2026-02-25).
 
@@ -10,9 +10,9 @@ This document has four parts:
 1. Deploy identity (what is live vs `main`)
 2. Observed behavior (what the live app does)
 3. Code behavior (what the source implements)
-4. Product spec + bugs + open questions (acceptance gate)
+4. Product spec + bugs + answered decisions (acceptance gate)
 
-Where observed and code agree, that agreement is treated as current behavior. Where they disagree, the item is listed as a **bug**. Where intended product behavior is not present in either, it is listed as an **open question** — not invented.
+Where observed and code agree, that agreement is treated as current behavior. Where they disagree, the item is listed as a **bug**. Owner decisions from the interview are recorded in §5–§6.
 
 ---
 
@@ -336,7 +336,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 | --- | --- |
 | Corner text | Optional; single visual line; upper area of oriented label; right-aligned; **font size shrinks to fit** the label (not a fixed band that clips on small sizes) |
 | Main text | Multiline; preserved whitespace; **always horizontally centered** (no align control); vertically centered in remaining area; auto-fit |
-| Portrait / Landscape | Portrait = no content rotation; Landscape = 90° content rotation inside fixed outer WxH page |
+| Portrait / Landscape | Portrait = no content rotation; Landscape = 90° content rotation inside fixed outer WxH page (page size is not swapped) |
 | Label size… | Opens size modal |
 | Clear | Full reset: clear main + corner text, orientation → Portrait, size/padding → default 4×6 / 0.2 in |
 | Print | Runs in-app print path (§5.2); gated against rapid double invocation |
