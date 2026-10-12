@@ -242,10 +242,10 @@ These are disagreements or broken contracts supported by evidence. Not a wishlis
    Footer is visible in `@media print` and sits below `#printRoot`. For 4×6, total print content height exceeds 6 in → extra/blank page risk (historical commits already fought blank second pages).
 
 2. **Size modal Cancel does not cancel**  
-   UI says Cancel; code only closes. Edits already applied and likely already saved.
+   UI says Cancel; code only closes. Edits already applied and likely already saved. **Accepted fix:** Cancel/Esc/backdrop must restore W/H/Pad to open-time values.
 
 3. **OK and Cancel are nearly identical**  
-   Both close; values already live-applied via `input` handlers. OK additionally calls `save()`.
+   Both close; values already live-applied via `input` handlers. OK additionally calls `save()`. **Accepted fix:** OK commits; Cancel reverts (see bug #2).
 
 4. **System print (Ctrl+P / iOS share) bypasses print prep**  
    Skips `@page` sizing, blur, and gated `printNow`. Observed Chrome PDF dialog then shows label on a non-label sheet.
@@ -321,7 +321,9 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 #### B. Label size modal
 
 - Presets and numeric fields as above.
-- Closing behavior: **currently non-reverting** — flagged as bug; desired Cancel semantics are Q2.
+- **Cancel / Esc / backdrop:** discard in-modal edits and restore W/H/Pad to the values from when the modal opened (proper cancel). Live preview may show edits while open, but discarding must put both fields and preview back.
+- **OK:** commit the edited values and close.
+- **Preset click:** apply that preset (commit), update preview, close.
 
 #### C. System print UI
 
@@ -361,7 +363,7 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 ## 6. Open questions (do not invent answers)
 
 1. ~~**Primary print target**~~ **Answered:** Hardware = **Rollo Wireless X1040**; primary clients = **Chrome on iOS** and **Safari on iOS**; other devices/browsers secondary.
-2. **Size modal Cancel:** Should Cancel revert W/H/Pad to the values from when the modal opened?
+2. ~~**Size modal Cancel**~~ **Answered:** Proper cancel with restore — Cancel/Esc/backdrop discard edits and restore W/H/Pad (and preview) to values from when the modal opened. OK commits.
 3. **Print “done”:** Is success “dialog opened with correct `@page` + label DOM,” or “user confirmed and exactly one label page printed with no SHA/extra page”?
 4. **Empty print:** Should Print be disabled or warn when main text (and corner text?) are empty?
 5. **Overflow:** Should overflow block printing, or only warn (current)?
