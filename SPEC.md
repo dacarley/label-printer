@@ -363,7 +363,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 
 ---
 
-## 6. Open questions (do not invent answers)
+## 6. Interview decisions (formerly open questions)
 
 1. ~~**Primary print target**~~ **Answered:** Hardware = **Rollo Wireless X1040**; primary clients = **Chrome on iOS** and **Safari on iOS**; other devices/browsers secondary.
 2. ~~**Size modal Cancel**~~ **Answered:** Proper cancel with restore — Cancel/Esc/backdrop discard edits and restore W/H/Pad (and preview) to values from when the modal opened. OK commits.
@@ -382,9 +382,12 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 
 ## 7. Acceptance
 
-Please reply with:
+All interview items (Q1–Q12) are answered above.
 
-- Accept / accept with edits to this spec
-- Answers to the open questions you care about (Q1–Q3 answered; continue from Q4)
+Please reply with one of:
 
-Implementation starts only after that.
+- **Accept** this spec as-is → implementation may begin
+- **Accept with edits** (list the edits)
+- **Hold** (not ready)
+
+Implementation starts only after explicit acceptance.
