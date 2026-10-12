@@ -308,10 +308,11 @@ Custom width/height/padding are also allowed within clamp ranges (§3.2).
 
 **Empty state**
 
-- Empty main text and corner text.
+- Empty main text and corner text (no sample content for first-time users).
+- While a text field is blank, it shows greyed placeholder/hint text in the field (not real value; not printed). Existing placeholders today: main `Type your label text here...`, corner `e.g. FRAGILE`.
 - Preview shows empty white label at current size (default 4×6 portrait).
 - No overflow warning.
-- Print remains available (current behavior).
+- Print stays enabled but does not open the system UI (see empty-print rule).
 
 **With content**
 
@@ -372,7 +373,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 6. ~~**Clear**~~ **Answered:** Full reset — clear main + corner text, set orientation to Portrait, restore default size/padding (4×6 / 0.2 in), update preview, and persist.
 7. ~~**Alignment**~~ **Answered:** Center-only permanently; no left/right controls.
 8. ~~**Corner text on small labels**~~ **Answered:** Shrink corner text to fit the label (do not keep a fixed ~0.375 in clipping band; do not hide).
-9. **Default text:** Current default is empty. Older builds used `Hello\nRollo`. Which do you want for first-time users?
+9. ~~**Default text**~~ **Answered:** Blank for first-time users (not `Hello`/`Rollo`). Blank fields show greyed placeholder/hint text in the inputs; placeholders are not printed.
 10. **Additional Rollo presets:** Add others (e.g. 3×1, 3×2, 2.25×1.25, round), or keep only 4×6 + 2×1 + custom?
 11. **Committed `dist/`:** Should it be removed from git / gitignored, or regenerated on each release commit?
 12. **Landscape meaning on Rollo:** Confirm that “rotate content inside fixed WxH” matches how you load stock (vs swapping page width/height).
