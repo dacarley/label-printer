@@ -260,7 +260,7 @@ These are disagreements or broken contracts supported by evidence. Not a wishlis
    Types, normalize, preview/print layout support left/center/right, but UI and `getRaw()` force center. Stored `align` is always `"center"` from the app. **Accepted product choice:** center-only — leftover left/right code paths are dead weight to clean up later, not a feature to expose.
 
 8. **Committed `dist/index.html` ≠ live/source**  
-   Stale artifact with `Hello\nRollo` default and without corner/Clear/SHA. Not what Pages serves, but it is what a naive open of `dist/` shows.
+   Stale artifact with `Hello\nRollo` default and without corner/Clear/SHA. Not what Pages serves, but it is what a naive open of `dist/` shows. **Accepted fix:** remove committed `dist/` from git and add `dist/` to `.gitignore`; CI/workflow builds it on deploy.
 
 9. **Corner text vs small labels**  
    Fixed ~0.375 in band is coded for both preview and print; on 2×1 this consumes a large fraction of height and interacts badly with overflow. **Accepted fix:** shrink corner text to fit (not fixed-band clip).
