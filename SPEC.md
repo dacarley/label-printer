@@ -375,7 +375,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 8. ~~**Corner text on small labels**~~ **Answered:** Shrink corner text to fit the label (do not keep a fixed ~0.375 in clipping band; do not hide).
 9. ~~**Default text**~~ **Answered:** Blank for first-time users (not `Hello`/`Rollo`). Blank fields show greyed placeholder/hint text in the inputs; placeholders are not printed.
 10. ~~**Additional Rollo presets**~~ **Answered:** Keep only **4×6** and **2×1** presets, plus custom W/H/Pad. No extra presets for now.
-11. **Committed `dist/`:** Should it be removed from git / gitignored, or regenerated on each release commit?
+11. ~~**Committed `dist/`**~~ **Answered:** Remove from git and gitignore `dist/`. Pages/CI builds on deploy; do not commit build output.
 12. **Landscape meaning on Rollo:** Confirm that “rotate content inside fixed WxH” matches how you load stock (vs swapping page width/height).
 
 ---
