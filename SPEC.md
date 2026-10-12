@@ -257,7 +257,7 @@ These are disagreements or broken contracts supported by evidence. Not a wishlis
    `#printOverlay` is never filled; one print rule sets it `display: block`, a later rule sets `display: none`. Real path is `#printRoot` only.
 
 7. **Align is half-implemented**  
-   Types, normalize, preview/print layout support left/center/right, but UI and `getRaw()` force center. Stored `align` is always `"center"` from the app.
+   Types, normalize, preview/print layout support left/center/right, but UI and `getRaw()` force center. Stored `align` is always `"center"` from the app. **Accepted product choice:** center-only — leftover left/right code paths are dead weight to clean up later, not a feature to expose.
 
 8. **Committed `dist/index.html` ≠ live/source**  
    Stale artifact with `Hello\nRollo` default and without corner/Clear/SHA. Not what Pages serves, but it is what a naive open of `dist/` shows.
@@ -370,7 +370,7 @@ Known clean-page defects (build SHA on the printed page, content taller than one
 4. ~~**Empty print**~~ **Answered:** Print stays enabled. When main and corner text are both empty, say there is nothing to print and **do not** open the system print UI until there is text.
 5. ~~**Overflow**~~ **Answered:** Keep the overflow warning in the editor. On Print while overflowing, ask for confirmation before opening the system print UI (do not silently print; do not hard-block without a choice).
 6. ~~**Clear**~~ **Answered:** Full reset — clear main + corner text, set orientation to Portrait, restore default size/padding (4×6 / 0.2 in), update preview, and persist.
-7. **Alignment:** Is center-only permanent, or should left/right controls return?
+7. ~~**Alignment**~~ **Answered:** Center-only permanently; no left/right controls.
 8. **Corner text on 2×1:** Keep fixed ~0.375 in band (clip), shrink corner text, or hide corner on small labels?
 9. **Default text:** Current default is empty. Older builds used `Hello\nRollo`. Which do you want for first-time users?
 10. **Additional Rollo presets:** Add others (e.g. 3×1, 3×2, 2.25×1.25, round), or keep only 4×6 + 2×1 + custom?
