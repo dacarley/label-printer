@@ -458,6 +458,11 @@ button:active {
 }
 
 @media print {
+	/*
+	 * iOS Chrome/Safari: keep the label out of normal flow.
+	 * A static 4×6in block plus any leftover body height (safe-area,
+	 * line boxes from whitespace, min-height) creates a blank page 2.
+	 */
 	html,
 	body {
 		margin: 0;
@@ -469,25 +474,40 @@ button:active {
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 		overflow: hidden;
+		/* Kill anonymous line boxes from whitespace between body children */
+		font-size: 0;
+		line-height: 0;
 	}
 
-	.app {
-		display: none;
-	}
-
+	.app,
 	.buildSha {
 		display: none;
 	}
 
 	#printRoot {
-		position: static;
-		left: auto;
-		top: auto;
+		position: fixed;
+		left: 0;
+		top: 0;
 		opacity: 1;
 		pointer-events: auto;
-		z-index: auto;
-		width: auto;
-		height: auto;
+		z-index: 1;
+		width: calc(var(--label-w-in) * 1in);
+		height: calc(var(--label-h-in) * 1in);
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		font-size: medium;
+		line-height: normal;
+	}
+
+	#printRoot .printLabel {
+		position: fixed;
+		left: 0;
+		top: 0;
+		width: calc(var(--label-w-in) * 1in);
+		height: calc(var(--label-h-in) * 1in);
+		margin: 0;
+		padding: 0;
 		overflow: hidden;
 	}
 }

@@ -1,3 +1,4 @@
+import { setCSSVars } from "../render/preview";
 import { renderPrintRoot } from "../render/printRoot";
 import type { LabelSettings } from "../state/types";
 import { clearPageSize, setPageSizeInches } from "./pageStyle";
@@ -9,6 +10,7 @@ export type PrintDeps = {
 };
 
 function preparePrint(deps: PrintDeps, snapshot: LabelSettings) {
+	setCSSVars(snapshot);
 	try {
 		renderPrintRoot(deps.printRoot, snapshot);
 	} catch {}
